@@ -1,0 +1,45 @@
+<view class="container">
+  <view class="history-header">
+    <view class="nav-bar">
+      <view class="back-btn" bindtap="goBack">
+        <text class="back-icon">〈</text>
+      </view>
+      <text class="page-title">考试记录</text>
+    </view>
+
+    <view class="stats-board">
+      <view class="stat-item">
+        <text class="stat-val">{{stats.totalCount}}</text>
+        <text class="stat-label">参与场次</text>
+      </view>
+      <view class="stat-item border-line">
+        <text class="stat-val">{{stats.highScore}}</text>
+        <text class="stat-label">最高分</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-val">{{stats.avgScore}}</text>
+        <text class="stat-label">平均分</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="list-section">
+    <block wx:if="{{historyList.length > 0}}">
+      <view class="record-card" wx:for="{{historyList}}" wx:key="id" bindtap="viewDetail" data-id="{{item.id}}">
+        <view class="card-info">
+          <text class="exam-name">{{item.title}}</text>
+          <text class="exam-time">{{item.time}}</text>
+        </view>
+        <view class="card-score">
+          <text class="score-num">{{item.score}}</text>
+          <text class="score-unit">分</text>
+        </view>
+      </view>
+    </block>
+
+    <view class="empty-state" wx:else>
+      <image src="/images/empty_error.png" class="empty-icon" mode="aspectFit"></image> [cite: 881]
+      <text class="empty-text">暂无考试记录，去考一场吧</text>
+    </view>
+  </view>
+</view>

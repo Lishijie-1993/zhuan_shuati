@@ -1,12 +1,22 @@
 <view class="container">
-  <view class="header-bg"></view>
-  
-  <view class="content">
-    <view class="page-title">
-      <text class="title-main">试卷列表</text>
-      <text class="title-sub">共 {{paperList.length}} 套模拟试卷</text>
+  <view class="test-header">
+    <view class="nav-bar">
+      <view class="back-btn" bindtap="goBack">
+        <text class="back-icon">〈</text>
+      </view>
+      <text class="page-title">模拟考试</text>
     </view>
 
+    <view class="header-content">
+      <view class="title-section">
+        <text class="title-main">试卷列表</text>
+        <text class="title-sub">共 {{paperList.length}} 套模拟试卷</text>
+      </view>
+      <view class="header-bg-icon">📝</view>
+    </view>
+  </view>
+
+  <view class="content-section">
     <view class="paper-list">
       <block wx:for="{{paperList}}" wx:key="id">
         <view class="paper-card" bindtap="startExam" data-id="{{item.id}}">
@@ -15,6 +25,7 @@
             <view class="paper-tags">
               <view class="tag">{{item.questionCount}}题</view>
               <view class="tag">{{item.duration}}分钟</view>
+              <view class="tag score-tag" wx:if="{{item.totalScore}}">总分{{item.totalScore}}</view>
             </view>
           </view>
           <view class="card-right">
@@ -22,6 +33,11 @@
           </view>
         </view>
       </block>
+
+      <view class="empty-state" wx:if="{{paperList.length === 0}}">
+        <image src="/images/empty_error.png" class="empty-icon" mode="aspectFit"></image>
+        <text class="empty-text">暂无模拟试卷，请联系管理员上传</text>
+      </view>
     </view>
   </view>
 </view>

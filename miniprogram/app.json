@@ -2,6 +2,7 @@
   "pages": [
     "pages/index/index",
     "pages/type/index",
+    "pages/history/index",
     "pages/favorite/index",
     "pages/category/index",
     "pages/quiz/index",

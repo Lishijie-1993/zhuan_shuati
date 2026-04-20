@@ -1,5 +1,5 @@
 .container { background-color: #f7f8fa; min-height: 100vh; padding: 20rpx; }
-.header { margin-bottom: 30rpx; padding-left: 10rpx; border-left: 8rpx solid #007aff; }
+.header { margin-bottom: 30rpx; padding-left: 10rpx; border-left: 8rpx solid #2D5CF6; }
 .title { font-size: 36rpx; font-weight: bold; color: #333; }
 
 .paper-card {
@@ -17,7 +17,7 @@
 .paper-meta { font-size: 24rpx; color: #999; display: flex; gap: 20rpx; }
 
 .btn-start {
-  background-color: #007aff;
+  background-color: #2D5CF6;
   color: #fff;
   font-size: 26rpx;
   padding: 10rpx 30rpx;

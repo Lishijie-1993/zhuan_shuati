@@ -40,7 +40,7 @@
 }
 
 .q-header { display: flex; justify-content: space-between; margin-bottom: 30rpx; }
-.q-type { background: #EEF3FF; color: #007AFF; font-size: 22rpx; padding: 4rpx 16rpx; border-radius: 6rpx; }
+.q-type { background: #EEF3FF; color: #2D5CF6; font-size: 22rpx; padding: 4rpx 16rpx; border-radius: 6rpx; }
 .q-score { color: #ccc; font-size: 22rpx; }
 
 .q-title {
@@ -80,14 +80,14 @@
 /* 选中状态 */
 .option-item.selected {
   background: rgba(0,122,255,0.05);
-  border-color: #007AFF;
+  border-color: #2D5CF6;
 }
 .option-item.selected .option-label {
-  background: #007AFF;
+  background: #2D5CF6;
   color: #fff;
 }
 .option-item.selected .option-content {
-  color: #007AFF;
+  color: #2D5CF6;
   font-weight: 500;
 }
 
@@ -115,7 +115,7 @@
 }
 
 .btn-nav.primary {
-  background: #007AFF;
+  background: #2D5CF6;
   color: #fff;
 }
 

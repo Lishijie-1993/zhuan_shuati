@@ -1,0 +1,8 @@
+{
+  "navigationBarTitleText": "考试记录",
+  "navigationStyle": "custom",
+  "usingComponents": {},
+  "navigationBarTextStyle": "white",
+  "backgroundColor": "#F8F9FB",
+  "backgroundColorTop": "#2D5CF6"
+}
