@@ -9,7 +9,10 @@ page {
   display: flex;
   flex-direction: column;
 }
-
+.status-bar {
+  height: env(safe-area-inset-top);
+  background-color: #fff;
+}
 /* 顶部导航栏 */
 .nav-bar {
   display: flex;

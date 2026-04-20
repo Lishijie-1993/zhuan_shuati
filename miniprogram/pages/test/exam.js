@@ -70,13 +70,16 @@ Page({
       const res = await cloud.startPaper(paperId);
 
       if (res && res.success && res.questions && res.questions.length > 0) {
+        const durationSeconds = (res.duration || 90) * 60;
         this.setData({
           questions: res.questions,
-          timeLeft: (res.duration || 90) * 60,
-          timerText: this.formatTimeText((res.duration || 90) * 60),
+          timeLeft: durationSeconds,
+          timerText: this.formatTimeText(durationSeconds),
           loading: false,
           snapshotId: res.snapshotId || paperId
         });
+        // 保存 duration 供后续使用
+        this.examDuration = durationSeconds;
       } else {
         this.loadMockData();
       }
@@ -107,7 +110,13 @@ Page({
         { id: 'A', text: '正确' }, { id: 'B', text: '错误' }
       ], answer: 'A' }
     ];
-    this.setData({ questions: mockQuestions, loading: false });
+    this.examDuration = 90 * 60; // 默认90分钟
+    this.setData({ 
+      questions: mockQuestions, 
+      loading: false,
+      timeLeft: this.examDuration,
+      timerText: this.formatTimeText(this.examDuration)
+    });
     wx.showToast({ title: '使用模拟题目', icon: 'none' });
   },
 
@@ -199,7 +208,9 @@ Page({
 
     const totalQuestions = this.data.questions.length;
     const score = Math.round((correctCount / totalQuestions) * 100);
-    const timeUsed = this.data.timeLeft > 0 ? this.data.timeLeft : 0;
+    // 计算实际用时 = 总时长 - 剩余时间
+    const totalTime = this.examDuration || this.data.timeLeft;
+    const timeUsed = Math.max(0, totalTime - this.data.timeLeft);
 
     wx.showLoading({ title: '正在阅卷...' });
 
@@ -213,19 +224,56 @@ Page({
       wx.hideLoading();
       wx.disableAlertBeforeUnload();
 
-      const finalScore = (res && res.success) ? res.score : score;
-      const finalCorrect = (res && res.success) ? res.correctCount : correctCount;
-
-      wx.redirectTo({
-        url: `/pages/test/result?score=${finalScore}&correct=${finalCorrect}&total=${totalQuestions}&paperId=${this.data.paperId}&recordId=${this.data.snapshotId || this.data.paperId}`
-      });
+      // 云函数调用成功，使用返回的结果
+      if (res && res.success) {
+        wx.redirectTo({
+          url: `/pages/test/result?score=${res.score}&correct=${res.correctCount}&total=${res.totalQuestions}&paperId=${this.data.paperId}&recordId=${this.data.snapshotId || this.data.paperId}`
+        });
+      } else {
+        // 云函数返回失败，但可能是记录已存在，使用本地结果
+        console.warn('云函数返回失败，使用本地结果:', res);
+        // 创建本地兜底记录
+        await this.createLocalRecord(score, correctCount, totalQuestions, timeUsed);
+        wx.redirectTo({
+          url: `/pages/test/result?score=${score}&correct=${correctCount}&total=${totalQuestions}&paperId=${this.data.paperId}&recordId=${this.data.snapshotId || this.data.paperId}`
+        });
+      }
     } catch (err) {
       console.error('提交试卷失败:', err);
       wx.hideLoading();
       wx.disableAlertBeforeUnload();
+      // 云函数调用异常，创建本地兜底记录
+      await this.createLocalRecord(score, correctCount, totalQuestions, timeUsed);
       wx.redirectTo({
         url: `/pages/test/result?score=${score}&correct=${correctCount}&total=${totalQuestions}&paperId=${this.data.paperId}&recordId=${this.data.snapshotId || this.data.paperId}`
       });
+    }
+  },
+
+  // 创建本地兜底记录（当云函数失败时）
+  async createLocalRecord(score, correctCount, totalQuestions, timeUsed) {
+    try {
+      const db = wx.cloud.database();
+      await db.collection('user_exam_records').add({
+        data: {
+          user_id: 'local_' + Date.now(),
+          paper_id: this.data.paperId,
+          paper_title: this.data.paperTitle || '模拟考试',
+          snapshot_id: 'local_' + Date.now(),
+          score: score,
+          answers: this.data.userAnswers,
+          question_ids: this.data.questions.map(q => q.id),
+          start_time: new Date(Date.now() - timeUsed * 1000),
+          submit_time: new Date(),
+          status: 'completed',
+          time_used: timeUsed,
+          created_at: new Date(),
+          updated_at: new Date()
+        }
+      });
+      console.log('本地兜底记录创建成功');
+    } catch (err) {
+      console.error('创建本地兜底记录失败:', err);
     }
   },
 

@@ -9,7 +9,7 @@ Page({
       highScore: 0,
       avgScore: 0
     },
-    loading: true,
+    loading: false,
     page: 1,
     hasMore: true
   },
@@ -19,14 +19,22 @@ Page({
   },
 
   onShow() {
-    this.setData({ page: 1, historyList: [] });
+    this.setData({ 
+      page: 1, 
+      historyList: [], 
+      hasMore: true, 
+      loading: false 
+    });
     this.loadHistory();
   },
 
   async loadHistory() {
-    if (this.data.loading === false && !this.data.hasMore) return;
+    // 【修复点】：增加严谨的防抖和阻断逻辑
+    if (this.data.loading) return; 
+    if (!this.data.hasMore) return;
 
     try {
+      this.setData({ loading: true });
       wx.showLoading({ title: '加载中...' });
 
       const res = await cloud.getExamHistory(this.data.page);
@@ -85,7 +93,13 @@ Page({
   },
 
   onPullDownRefresh() {
-    this.setData({ page: 1, historyList: [], hasMore: true });
+    // 【修复点】：同样补全状态重置
+    this.setData({ 
+      page: 1, 
+      historyList: [], 
+      hasMore: true, 
+      loading: false 
+    });
     this.loadHistory();
     setTimeout(() => { wx.stopPullDownRefresh(); }, 500);
   }

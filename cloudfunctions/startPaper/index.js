@@ -69,7 +69,8 @@ exports.main = async (event, context) => {
           type: q.type === 'single' ? 'single' : (q.type === 'multiple' ? 'multiple' : 'judge'),
           title: q.content,
           options: formatOptions(q.options),
-          answer: q.correct_answer,
+          // 解析答案字段，支持多种格式
+          answer: parseAnswer(q.correct_answer, q.type),
           analysis: q.analysis || ''
         }));
     }
@@ -128,4 +129,43 @@ function formatOptions(options) {
   }
 
   return [];
+}
+
+// 解析答案字段，确保格式统一
+function parseAnswer(correctAnswer, questionType) {
+  if (!correctAnswer) return null;
+
+  // 如果已经是数组，直接返回
+  if (Array.isArray(correctAnswer)) {
+    return correctAnswer.sort(); // 排序确保一致
+  }
+
+  // 如果是字符串，尝试解析
+  if (typeof correctAnswer === 'string') {
+    // 尝试解析 JSON 数组
+    try {
+      const parsed = JSON.parse(correctAnswer);
+      if (Array.isArray(parsed)) {
+        return parsed.sort();
+      }
+    } catch (e) {
+      // JSON 解析失败，可能是多选格式如 "A,B,C" 或 "ABC"
+    }
+
+    // 处理逗号分隔的格式如 "A,B,C"
+    if (correctAnswer.includes(',')) {
+      return correctAnswer.split(',').map(s => s.trim().toUpperCase()).sort();
+    }
+
+    // 处理连续字符串格式如 "ABC" (多选) 或 "A" (单选/判断)
+    // 如果是单选/判断，返回单个字符
+    if (questionType === 'single' || questionType === 'judge') {
+      return correctAnswer.trim().toUpperCase();
+    }
+
+    // 多选可能是连续字符串如 "ABC"
+    return correctAnswer.split('').map(s => s.trim().toUpperCase()).sort();
+  }
+
+  return correctAnswer;
 }

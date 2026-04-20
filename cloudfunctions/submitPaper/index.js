@@ -3,6 +3,7 @@ const cloud = require('wx-server-sdk');
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
+const _ = db.command;
 
 exports.main = async (event, context) => {
   const { snapshotId, answers, timeUsed } = event;
@@ -47,7 +48,21 @@ exports.main = async (event, context) => {
       const question = questionsMap[qId];
       
       if (question) {
-        const isCorrect = normalizeAnswer(userAnswer) === normalizeAnswer(question.correct_answer);
+        // 判断是否是多选题（答案可能是数组）
+        const isMultipleChoice = question.type === 'multiple';
+        let isCorrect;
+
+        if (isMultipleChoice) {
+          // 多选题：排序后比较数组
+          const sortedUser = Array.isArray(userAnswer) ? [...userAnswer].sort() : [];
+          const sortedCorrect = Array.isArray(question.correct_answer) 
+            ? [...question.correct_answer].sort() 
+            : [question.correct_answer].sort();
+          isCorrect = JSON.stringify(sortedUser) === JSON.stringify(sortedCorrect);
+        } else {
+          // 单选题/判断题：标准化后比较字符串
+          isCorrect = normalizeAnswer(userAnswer) === normalizeAnswer(question.correct_answer);
+        }
         
         if (isCorrect) {
           score += perQuestionScore;
