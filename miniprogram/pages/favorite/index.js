@@ -14,6 +14,7 @@ Page({
     // 【修改点1】确保调用了 setData 且键名为 favorites，界面才会刷新
     this.setData({ 
       favorites: list,
+      currentIndex: 0, // 每次进入页面重置到第一题
       userAnswers: {},
       showAnalysisMap: {}
     });
