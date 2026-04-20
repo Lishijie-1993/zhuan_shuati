@@ -1,3 +1,4 @@
+// miniprogram/pages/index/index.js
 Page({
   /**
    * 页面的初始数据 
@@ -21,25 +22,28 @@ Page({
     const name = e.currentTarget.dataset.name; 
     
     if (name === '专项刷题') {
+      // 进入专项刷题（章节练习）入口 
       wx.navigateTo({ url: '/pages/category/index' });
     } else if (name === '题型刷题') {
+      // 进入按题型筛选的练习入口 
       wx.navigateTo({ url: '/pages/type/index' });
     } else if (name === '乱序刷题') {
-      // 新增：跳转至乱序刷题页面
+      // 进入全题库随机乱序模式 
       wx.navigateTo({ url: '/pages/random/index' }); 
     } else if (name === '我的收藏') {
+      // 查看已收藏的题目 [cite: 54, 75]
       wx.navigateTo({ 
         url: '/pages/favorite/index',
         fail: () => {
-          wx.showToast({ title: '请先创建收藏页面', icon: 'none' });
+          wx.showToast({ title: '收藏页面跳转失败', icon: 'none' });
         }
       });
     } else if (name === '我的错题') {
-      // 跳转至“我的错题”页面
+      // 查看练习过程中的错题记录 [cite: 39]
       wx.navigateTo({ 
         url: '/pages/error/index',
         fail: () => {
-          wx.showToast({ title: '请检查是否已创建 error 页面', icon: 'none' });
+          wx.showToast({ title: '错题页面跳转失败', icon: 'none' });
         }
       });
     } else {
@@ -48,18 +52,24 @@ Page({
   },
 
   /**
-   * 开始刷题点击事件 [cite: 92]
+   * 开始刷题点击事件
+   * 逻辑修改：与“专项刷题”保持一致，跳转至分类选择页 
    */
   startQuiz() {
-    // 跳转至默认的开始刷题页面 [cite: 92]
-    wx.showToast({ title: '准备开始练习', icon: 'none' });
+    // 统一入口，跳转至专项刷题/分类页面
+    wx.navigateTo({ 
+      url: '/pages/category/index',
+      success: () => {
+        console.log('成功进入刷题入口');
+      }
+    });
   },
 
   /**
-   * 模拟考试点击事件 [cite: 93]
+   * 模拟考试点击事件 [cite: 93, 101]
    */
   toExam() {
-    // 跳转至模拟考试页面 [cite: 93]
-    wx.showToast({ title: '正在进入模拟考试', icon: 'none' });
+    // 目前跳转逻辑待完善，先保留提示
+    wx.showToast({ title: '模拟考试功能正在接入中', icon: 'none' });
   }
 })
