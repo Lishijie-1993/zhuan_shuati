@@ -7,6 +7,7 @@
     "pages/quiz/index",
     "pages/info/index",
     "pages/rank/index",
+    "pages/error/index",
     "pages/user/index"
   ],
   "tabBar": {
