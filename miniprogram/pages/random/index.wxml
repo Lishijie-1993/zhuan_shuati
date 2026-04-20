@@ -1,0 +1,54 @@
+<view class="container">
+  <view class="header">
+    <view class="nav-bar">
+      <view class="back-btn" bindtap="goBack">
+        <text class="back-icon">〈</text>
+      </view>
+    </view>
+    <view class="header-content">
+      <view class="header-bg-icon">🎲</view>
+      <text class="header-title">乱序刷题模式</text>
+    </view>
+  </view>
+
+  <view class="selection-section">
+    <view class="select-card" bindtap="openPicker">
+      <view class="dot"></view>
+      <text class="card-text">{{selectedIndustry}}</text>
+      <text class="arrow">〉</text>
+    </view>
+    
+    <view class="select-card readonly-card">
+      <view class="dot"></view>
+      <text class="card-text">{{selectedType}} 《{{selectedIndustry}}》</text>
+      <text class="arrow" style="opacity: 0;">〉</text> 
+    </view>
+  </view>
+
+  <view class="divider">
+    <view class="line"></view>
+    <text class="divider-text">点击下方按钮开始乱序练习</text>
+    <view class="line"></view>
+  </view>
+
+  <view class="chapter-grid">
+    <view class="grid-item" bindtap="startQuiz">
+      开始乱序刷题
+    </view>
+  </view>
+
+  <view class="picker-modal" wx:if="{{showPicker}}">
+    <view class="mask" bindtap="closePicker"></view>
+    <view class="picker-content">
+      <picker-view indicator-style="height: 50px;" style="width: 100%; height: 250px;" value="{{pickerValue}}" bindchange="onPickerChange">
+        <picker-view-column>
+          <view wx:for="{{industryOptions}}" wx:key="*this" style="line-height: 50px; text-align: center;">{{item}}</view>
+        </picker-view-column>
+      </picker-view>
+      <view class="picker-buttons">
+        <button class="btn-cancel" bindtap="closePicker">取消</button>
+        <button class="btn-confirm" bindtap="confirmSelection">确定</button>
+      </view>
+    </view>
+  </view>
+</view>

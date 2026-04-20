@@ -1,0 +1,241 @@
+page {
+  background-color: #f8f9fb;
+}
+
+.container {
+  min-height: 100vh;
+}
+
+/* =========================================
+   1. 头部区域：修复顶部黑边并适配状态栏
+   ========================================= */
+.header {
+  background: linear-gradient(180deg, #2D5CF6 0%, #4A7FFF 100%);
+  /* 使用 safe-area-inset-top 动态适配状态栏高度，彻底消除黑边 */
+  padding-top: env(safe-area-inset-top); 
+  padding-left: 40rpx;
+  padding-right: 40rpx;
+  padding-bottom: 120rpx; 
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 自定义导航栏区域（放返回按钮） */
+.nav-bar {
+  height: 44px; /* 微信标准导航栏高度 */
+  display: flex;
+  align-items: center;
+  position: relative;
+  z-index: 11;
+}
+
+.back-icon {
+  font-size: 44rpx;
+  font-weight: bold;
+  color: #fff;
+}
+
+.header-content {
+  margin-top: 20rpx;
+}
+
+.header-bg-icon {
+  position: absolute;
+  right: -20rpx;
+  top: 60rpx;
+  font-size: 200rpx;
+  opacity: 0.1;
+}
+
+.header-title {
+  font-size: 44rpx;
+  font-weight: bold;
+  display: block;
+}
+
+/* =========================================
+   2. 选择卡片：区分可点击与展示用
+   ========================================= */
+.selection-section {
+  margin: -80rpx 30rpx 0; /* 向上悬浮遮盖 header 底部 */
+  position: relative;
+  z-index: 10;
+}
+
+.select-card {
+  background: #fff;
+  border-radius: 16rpx;
+  height: 110rpx;
+  display: flex;
+  align-items: center;
+  padding: 0 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
+  transition: all 0.2s;
+}
+
+/* 点击反馈：仅对可点击卡片生效 */
+.select-card:active:not(.readonly-card) {
+  background-color: #f0f0f0;
+  transform: scale(0.98);
+}
+
+/* 只读卡片样式：背景色稍浅，文字颜色变灰，去除阴影感 */
+.readonly-card {
+  background-color: #fcfcfc;
+  box-shadow: none;
+  border: 1rpx solid #eee;
+}
+
+.readonly-card .card-text {
+  color: #666;
+}
+
+.dot {
+  width: 14rpx;
+  height: 14rpx;
+  background-color: #5d8aff;
+  border-radius: 50%;
+  margin-right: 30rpx;
+}
+
+.card-text {
+  flex: 1;
+  font-size: 30rpx;
+  color: #333;
+}
+
+.arrow {
+  color: #ccc;
+  font-size: 26rpx;
+}
+
+/* =========================================
+   3. 分割线与网格布局
+   ========================================= */
+.divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60rpx 0 40rpx;
+}
+
+.line {
+  width: 80rpx;
+  height: 2rpx;
+  background-color: #2D5CF6;
+  opacity: 0.5;
+}
+
+.divider-text {
+  font-size: 26rpx;
+  color: #2D5CF6;
+  margin: 0 20rpx;
+}
+
+.chapter-grid {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0 20rpx 40rpx;
+}
+
+.grid-item {
+  width: 44%;
+  margin: 0 3% 24rpx;
+  background-color: #5d8aff;
+  color: #fff;
+  height: 90rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12rpx;
+  font-size: 26rpx;
+  text-align: center;
+  padding: 0 10rpx;
+  box-shadow: 0 6rpx 12rpx rgba(93, 138, 255, 0.2);
+}
+
+.grid-item:active {
+  opacity: 0.8;
+}
+
+/* =========================================
+   4. 自定义选择器弹窗样式 (匹配图2)
+   ========================================= */
+.picker-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mask {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.picker-content {
+  position: relative;
+  width: 80%;
+  background: #fff;
+  border-radius: 12rpx;
+  overflow: hidden;
+  animation: fadeInCenter 0.3s ease-out;
+}
+
+.picker-item-normal {
+  color: #ccc;
+  font-size: 32rpx;
+}
+
+.picker-item-active {
+  color: #333;
+  font-size: 36rpx;
+  font-weight: 500;
+}
+
+.picker-buttons {
+  display: flex;
+  padding: 30rpx;
+  gap: 20rpx;
+  background: #2a2a2a; /* 匹配截图中的深色底部 */
+}
+
+.btn-cancel, .btn-confirm {
+  flex: 1;
+  height: 88rpx;
+  line-height: 88rpx;
+  font-size: 32rpx;
+  border-radius: 8rpx;
+  padding: 0;
+  border: none;
+}
+
+.btn-cancel {
+  background-color: #3d3d3d;
+  color: #ffffff;
+}
+
+.btn-confirm {
+  background-color: #07c160;
+  color: #ffffff;
+}
+
+@keyframes fadeInCenter {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
