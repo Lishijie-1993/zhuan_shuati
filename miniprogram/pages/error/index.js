@@ -1,21 +1,21 @@
+// miniprogram/pages/error/index.js
+const { STORAGE_KEYS } = require('../../utils/constants.js');
+
 Page({
   data: {
-    activeTab: 'today', // today 或 all
+    activeTab: 'today',
     errorCount: 0
   },
 
   onLoad() {
-    // 可以在这里读取本地存储的错题数量
-    const list = wx.getStorageSync('my_errors') || [];
+    const list = wx.getStorageSync(STORAGE_KEYS.ERRORS) || [];
     this.setData({ errorCount: list.length });
   },
 
-  // 返回上一页
   goBack() {
     wx.navigateBack({ delta: 1 });
   },
 
-  // 切换标签
   switchTab(e) {
     const tab = e.currentTarget.dataset.tab;
     this.setData({ activeTab: tab });

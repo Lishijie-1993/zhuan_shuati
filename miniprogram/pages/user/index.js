@@ -1,4 +1,6 @@
 // pages/user/index.js
+const { STORAGE_KEYS } = require('../../utils/constants.js');
+
 Page({
   data: {
     userInfo: {
@@ -21,13 +23,14 @@ Page({
     this.loadUserInfo();
   },
 
-  // 加载用户信息
   loadUserInfo() {
-    // 实际项目中应该从本地存储或后端获取用户信息
-    // 这里使用模拟数据
+    // 从本地存储读取用户信息
+    const userInfo = wx.getStorageSync(STORAGE_KEYS.USER_INFO);
+    if (userInfo) {
+      this.setData({ userInfo });
+    }
   },
 
-  // 编辑资料
   goToProfile() {
     wx.showToast({
       title: '功能开发中',
@@ -35,42 +38,36 @@ Page({
     });
   },
 
-  // 学习记录
   goToHistory() {
     wx.navigateTo({
       url: '/pages/history/index'
     });
   },
 
-  // 刷题记录
   goToQuizHistory() {
     wx.navigateTo({
       url: '/pages/history/index'
     });
   },
 
-  // 我的收藏
   goToFavorites() {
     wx.navigateTo({
       url: '/pages/favorite/index'
     });
   },
 
-  // 错题本
   goToWrongQuestions() {
     wx.navigateTo({
       url: '/pages/error/index'
     });
   },
 
-  // 我的勋章
   goToMedals() {
     wx.navigateTo({
       url: '/pages/medals/index'
     });
   },
 
-  // 分享好友
   shareToFriend() {
     wx.showShareMenu({
       withShareTicket: true,
@@ -78,7 +75,6 @@ Page({
     });
   },
 
-  // 意见反馈
   goToFeedback() {
     wx.showToast({
       title: '功能开发中',
@@ -86,7 +82,6 @@ Page({
     });
   },
 
-  // 关于我们
   goToAbout() {
     wx.showModal({
       title: '关于我们',
@@ -96,27 +91,25 @@ Page({
     });
   },
 
-  // 设置
   goToSettings() {
     wx.navigateTo({
       url: '/pages/settings/index'
     });
   },
 
-  // 退出登录
   logout() {
     wx.showModal({
       title: '提示',
       content: '确定要退出登录吗？',
       success: (res) => {
         if (res.confirm) {
-          // 清除用户信息
-          wx.removeStorageSync('userInfo');
+          wx.removeStorageSync(STORAGE_KEYS.USER_INFO);
+          wx.removeStorageSync(STORAGE_KEYS.FAVORITES);
+          wx.removeStorageSync(STORAGE_KEYS.ERRORS);
           wx.showToast({
             title: '已退出登录',
             icon: 'success'
           });
-          // 实际项目中可能需要跳转到登录页
         }
       }
     });

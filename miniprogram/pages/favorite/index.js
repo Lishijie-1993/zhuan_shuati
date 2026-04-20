@@ -1,3 +1,6 @@
+// miniprogram/pages/favorite/index.js
+const { STORAGE_KEYS } = require('../../utils/constants.js');
+
 Page({
   data: {
     favorites: [],
@@ -11,7 +14,7 @@ Page({
   onShow() {
     console.log('📦 收藏页 onShow 执行');
     try {
-      const list = wx.getStorageSync('my_favorites') || [];
+      const list = wx.getStorageSync(STORAGE_KEYS.FAVORITES) || [];
       console.log('📋 读取到的收藏数据:', list);
       console.log('📊 收藏数量:', list.length);
       
@@ -33,9 +36,19 @@ Page({
         analysisText: item.analysisText || '暂无解析'
       }));
       
+      // 修正 currentIndex，确保不会越界
+      let newIndex = 0;
+      if (this.data.currentIndex >= formattedList.length && formattedList.length > 0) {
+        newIndex = formattedList.length - 1;
+      } else if (formattedList.length === 0) {
+        newIndex = 0;
+      } else {
+        newIndex = this.data.currentIndex;
+      }
+      
       this.setData({ 
         favorites: formattedList,
-        currentIndex: 0,
+        currentIndex: newIndex,
         userAnswers: {},
         showAnalysisMap: {}
       });
@@ -90,13 +103,25 @@ Page({
     if (list.length === 0) return;
 
     list.splice(index, 1);
-    wx.setStorageSync('my_favorites', list);
+    wx.setStorageSync(STORAGE_KEYS.FAVORITES, list);
     
-    this.setData({ favorites: list });
-    
-    if (this.data.currentIndex >= list.length && list.length > 0) {
-      this.setData({ currentIndex: list.length - 1 });
+    // 删除后修正 currentIndex
+    let newIndex = index;
+    if (list.length === 0) {
+      // 全部删除
+      newIndex = 0;
+    } else if (index >= list.length) {
+      // 删除的是最后一项，currentIndex 修正为最后一项
+      newIndex = list.length - 1;
     }
+    // 否则保持在当前位置（下一题自动显示）
+    
+    this.setData({ 
+      favorites: list,
+      currentIndex: newIndex,
+      userAnswers: {},
+      showAnalysisMap: {}
+    });
     
     wx.showToast({ title: '已移出收藏', icon: 'none' });
   },

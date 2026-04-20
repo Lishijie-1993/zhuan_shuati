@@ -1,6 +1,7 @@
 <view class="container">
   
-  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
+  <view class="custom-nav">
+    <view class="status-bar"></view>
     <view class="nav-content">
       <view class="back-btn" bindtap="goBack">
         <text class="back-icon">〈</text>

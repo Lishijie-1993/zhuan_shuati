@@ -1,25 +1,33 @@
 /* pages/point/index.wxss */
+page {
+  background-color: #f8f9fb;
+}
+
 .container {
-  background-color: #f7f8fa;
+  background-color: #f8f9fb;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
 /* ==========================================================================
-   1. 自定义顶部导航栏 
+   1. 自定义顶部导航栏 - 使用 env(safe-area-inset-top) 统一适配
    ========================================================================== */
 .custom-nav {
   background-color: #ffffff;
-  position: sticky; /* 固定在顶部 */
+  position: sticky;
   top: 0;
   z-index: 1000;
   width: 100%;
   border-bottom: 1rpx solid #f1f2f6;
 }
 
+.status-bar {
+  height: env(safe-area-inset-top);
+}
+
 .nav-content {
-  height: 88rpx; /* 标准胶囊按钮高度 */
+  height: 88rpx;
   display: flex;
   align-items: center;
   position: relative;
@@ -40,13 +48,13 @@
 .back-icon {
   font-size: 36rpx;
   font-weight: bold;
-  color: #1e90ff; /* 使用统一的蓝色调 */
+  color: #2D5CF6;
   margin-right: 8rpx;
 }
 
 .back-btn text:last-child {
   font-size: 30rpx;
-  color: #1e90ff;
+  color: #2D5CF6;
 }
 
 /* 页面标题 */
@@ -55,7 +63,7 @@
   text-align: center;
   font-size: 34rpx;
   font-weight: bold;
-  color: #2f3542;
+  color: #333;
 }
 
 /* ==========================================================================
@@ -109,7 +117,7 @@
   display: block;
   font-size: 32rpx;
   font-weight: bold;
-  color: #2f3542;
+  color: #333;
   margin-bottom: 10rpx;
 }
 
@@ -119,7 +127,7 @@
 }
 
 .learn-btn {
-  background-color: #1e90ff !important;
+  background-color: #2D5CF6 !important;
   color: white !important;
   border-radius: 30rpx;
   font-weight: normal;
