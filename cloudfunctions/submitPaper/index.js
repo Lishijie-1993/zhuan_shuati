@@ -43,27 +43,59 @@ exports.main = async (event, context) => {
     const detail = [];
     const perQuestionScore = Math.floor(100 / questionIds.length); // 每题分值
 
+    // 解析答案字段，确保格式统一
+    function parseAnswer(correctAnswer) {
+      if (!correctAnswer) return [];
+
+      // 如果已经是数组，直接返回
+      if (Array.isArray(correctAnswer)) {
+        return correctAnswer.map(a => String(a).trim().toUpperCase()).sort();
+      }
+
+      // 如果是字符串，尝试解析
+      if (typeof correctAnswer === 'string') {
+        // 尝试解析 JSON 数组
+        try {
+          const parsed = JSON.parse(correctAnswer);
+          if (Array.isArray(parsed)) {
+            return parsed.map(a => String(a).trim().toUpperCase()).sort();
+          }
+        } catch (e) {
+          // JSON 解析失败
+        }
+
+        // 处理逗号分隔的格式如 "A,B,C"
+        if (correctAnswer.includes(',')) {
+          return correctAnswer.split(',').map(s => s.trim().toUpperCase()).sort();
+        }
+
+        // 处理连续字符串格式如 "ABC" (多选)
+        return correctAnswer.split('').map(s => s.trim().toUpperCase()).filter(s => s).sort();
+      }
+
+      // 其他情况返回空数组
+      return [];
+    }
+
     for (const qId of questionIds) {
       const userAnswer = answers[qId] || '';
       const question = questionsMap[qId];
-      
+
       if (question) {
         // 判断是否是多选题（答案可能是数组）
         const isMultipleChoice = question.type === 'multiple';
         let isCorrect;
 
         if (isMultipleChoice) {
-          // 多选题：排序后比较数组
-          const sortedUser = Array.isArray(userAnswer) ? [...userAnswer].sort() : [];
-          const sortedCorrect = Array.isArray(question.correct_answer) 
-            ? [...question.correct_answer].sort() 
-            : [question.correct_answer].sort();
-          isCorrect = JSON.stringify(sortedUser) === JSON.stringify(sortedCorrect);
+          // 多选题：解析并排序后比较数组
+          const correctArr = parseAnswer(question.correct_answer);
+          const userArr = parseAnswer(userAnswer);
+          isCorrect = JSON.stringify(correctArr) === JSON.stringify(userArr) && correctArr.length > 0;
         } else {
           // 单选题/判断题：标准化后比较字符串
           isCorrect = normalizeAnswer(userAnswer) === normalizeAnswer(question.correct_answer);
         }
-        
+
         if (isCorrect) {
           score += perQuestionScore;
           correctCount++;

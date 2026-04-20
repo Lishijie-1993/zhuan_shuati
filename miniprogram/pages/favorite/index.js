@@ -37,6 +37,7 @@ Page({
 
         this.setData({
           favorites: res.list,
+          currentIndex: 0,
           loading: false,
           debugInfo: `加载成功，共 ${res.list.length} 条收藏`
         });
@@ -48,6 +49,7 @@ Page({
 
         this.setData({
           favorites: [],
+          currentIndex: 0,
           loading: false,
           debugInfo: '云函数返回数据为空'
         });
@@ -61,6 +63,7 @@ Page({
 
       this.setData({
         favorites: [],
+        currentIndex: 0,
         loading: false,
         debugInfo: `加载失败: ${err.message || err.errMsg || '未知错误'}`
       });
@@ -69,9 +72,24 @@ Page({
     }
   },
 
+  // 获取当前题目（带安全检查）
+  getCurrentQuestion() {
+    const { favorites, currentIndex } = this.data;
+    if (!favorites || favorites.length === 0) return null;
+    if (currentIndex < 0 || currentIndex >= favorites.length) return null;
+    return favorites[currentIndex];
+  },
+
   onSwiperChange(e) {
-    console.log('[favorite] 滑动切换，当前索引:', e.detail.current);
-    this.setData({ currentIndex: e.detail.current });
+    const newIndex = e.detail.current;
+    if (newIndex >= 0 && newIndex < this.data.favorites.length) {
+      console.log('[favorite] 滑动切换，当前索引:', newIndex);
+      this.setData({ 
+        currentIndex: newIndex,
+        userAnswers: {},
+        showAnalysisMap: {}
+      });
+    }
   },
 
   switchMode(e) {
@@ -96,7 +114,7 @@ Page({
     const { optId, qId } = e.currentTarget.dataset;
     console.log('[favorite] 选择选项:', { optId, qId });
 
-    const currentQuestion = this.data.favorites[this.data.currentIndex];
+    const currentQuestion = this.getCurrentQuestion();
     if (!currentQuestion) {
       console.log('[favorite] 题目不存在');
       return;
@@ -124,7 +142,7 @@ Page({
       console.log('[favorite] 答对了，自动下一题');
       if (this.data.currentIndex < this.data.favorites.length - 1) {
         setTimeout(() => {
-          this.setData({ currentIndex: this.data.currentIndex + 1 });
+          this.nextQuestion();
         }, 800);
       }
     }
@@ -132,7 +150,7 @@ Page({
 
   async onFavorite() {
     const index = this.data.currentIndex;
-    const currentQ = this.data.favorites[index];
+    const currentQ = this.getCurrentQuestion();
 
     console.log('[favorite] 点击收藏按钮，当前题目:', JSON.stringify(currentQ));
 
@@ -154,11 +172,17 @@ Page({
         list.splice(index, 1);
         console.log('[favorite] 移除后列表长度:', list.length);
 
-        let newIndex = index;
+        // 安全地计算新的索引
+        let newIndex = 0;
         if (list.length === 0) {
+          // 列表为空时，重置索引和状态
           newIndex = 0;
         } else if (index >= list.length) {
+          // 删除的是最后一项，新索引指向最后一项
           newIndex = list.length - 1;
+        } else {
+          // 删除中间项，保持当前索引位置
+          newIndex = index;
         }
 
         this.setData({
@@ -178,10 +202,15 @@ Page({
 
   prevQuestion() {
     console.log('[favorite] 上一题，当前:', this.data.currentIndex);
+    if (this.data.favorites.length === 0) {
+      wx.showToast({ title: '暂无题目', icon: 'none' });
+      return;
+    }
     if (this.data.currentIndex > 0) {
       this.setData({
         currentIndex: this.data.currentIndex - 1,
-        userAnswers: {}
+        userAnswers: {},
+        showAnalysisMap: {}
       });
     } else {
       wx.showToast({ title: '已经是第一题了', icon: 'none' });
@@ -190,10 +219,15 @@ Page({
 
   nextQuestion() {
     console.log('[favorite] 下一题，当前:', this.data.currentIndex, '总共:', this.data.favorites.length);
+    if (this.data.favorites.length === 0) {
+      wx.showToast({ title: '暂无题目', icon: 'none' });
+      return;
+    }
     if (this.data.currentIndex < this.data.favorites.length - 1) {
       this.setData({
         currentIndex: this.data.currentIndex + 1,
-        userAnswers: {}
+        userAnswers: {},
+        showAnalysisMap: {}
       });
     } else {
       wx.showToast({ title: '已经是最后一题了', icon: 'none' });
@@ -203,7 +237,8 @@ Page({
   onAnalysis() {
     console.log('[favorite] 点击查看解析');
     if (this.data.favorites.length === 0) return;
-    const currentQ = this.data.favorites[this.data.currentIndex];
+    const currentQ = this.getCurrentQuestion();
+    if (!currentQ) return;
     const showAnalysisMap = { ...this.data.showAnalysisMap, [currentQ.id]: true };
     this.setData({ showAnalysisMap });
   },

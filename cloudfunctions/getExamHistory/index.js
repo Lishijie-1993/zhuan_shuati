@@ -11,40 +11,31 @@ exports.main = async (event, context) => {
   const openid = wxContext.OPENID;
 
   try {
-    const BATCH_SIZE = 100;
-    const allRecords = [];
-    let skip = 0;
-    let hasMore = true;
+    const skip = (page - 1) * limit;
 
-    // 分批获取所有已完成记录（解决云数据库100条限制）
-    while (hasMore) {
-      const res = await db.collection('user_exam_records')
-        .where({
-          user_id: openid,
-          status: 'completed'
-        })
-        .orderBy('submit_time', 'desc')
-        .skip(skip)
-        .limit(BATCH_SIZE)
-        .get();
+    // 先获取符合条件的总记录数（用于分页导航）
+    const countRes = await db.collection('user_exam_records')
+      .where({
+        user_id: openid,
+        status: 'completed'
+      })
+      .count();
 
-      allRecords.push(...res.data);
+    const total = countRes.total;
 
-      if (res.data.length < BATCH_SIZE) {
-        hasMore = false;
-      } else {
-        skip += BATCH_SIZE;
-      }
-    }
-
-    const total = allRecords.length;
-
-    // 分页
-    const skipCount = (page - 1) * limit;
-    const pageRecords = allRecords.slice(skipCount, skipCount + limit);
+    // 使用真正的数据库分页，直接 skip + limit
+    const res = await db.collection('user_exam_records')
+      .where({
+        user_id: openid,
+        status: 'completed'
+      })
+      .orderBy('submit_time', 'desc')
+      .skip(skip)
+      .limit(limit)
+      .get();
 
     // 格式化记录数据
-    const list = pageRecords.map(record => {
+    const list = res.data.map(record => {
       const submitTime = record.submit_time
         ? new Date(record.submit_time)
         : new Date();
@@ -70,7 +61,7 @@ exports.main = async (event, context) => {
       total,
       page,
       limit,
-      hasNext: skipCount + list.length < total
+      hasNext: skip + list.length < total
     };
   } catch (err) {
     console.error('获取考试记录失败:', err);

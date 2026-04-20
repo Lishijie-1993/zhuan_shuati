@@ -21,32 +21,47 @@ Page({
   },
 
   onShow() {
-    this.loadUserInfo();
+    // 每次显示页面时都强制刷新数据，确保状态同步
+    this.loadUserInfo(true);
   },
 
   // 加载用户信息
-  async loadUserInfo() {
+  async loadUserInfo(forceRefresh = false) {
     try {
-      const res = await cloud.getUserInfo();
+      // 先尝试从存储获取缓存数据用于快速显示
+      const cachedUser = wx.getStorageSync(STORAGE_KEYS.USER_INFO);
+      
+      // 如果有缓存且不是强制刷新，先显示缓存数据
+      if (cachedUser && !forceRefresh) {
+        this.setData({ userInfo: cachedUser });
+      }
 
-      if (res && res.userInfo) {
-        // 从数据库获取实时错题数量
-        const errorCount = await this.getErrorCount();
-        const favoriteCount = await this.getFavoriteCount();
+      // 并行获取所有实时数据，确保状态同步
+      const [userRes, errorCount, favoriteCount] = await Promise.all([
+        cloud.getUserInfo(),
+        this.getErrorCount(),
+        this.getFavoriteCount()
+      ]);
 
+      if (userRes && userRes.userInfo) {
         const userInfo = {
-          ...res.userInfo,
+          ...userRes.userInfo,
           wrongQuestions: errorCount,
           favorites: favoriteCount
         };
 
+        // 更新存储和页面数据
         wx.setStorageSync(STORAGE_KEYS.USER_INFO, userInfo);
         this.setData({ userInfo });
-      } else {
-        const localUser = wx.getStorageSync(STORAGE_KEYS.USER_INFO);
-        if (localUser) {
-          this.setData({ userInfo: localUser });
-        }
+      } else if (cachedUser) {
+        // 如果云函数返回失败，但有缓存，更新缓存中的数量
+        const updatedUser = {
+          ...cachedUser,
+          wrongQuestions: errorCount,
+          favorites: favoriteCount
+        };
+        wx.setStorageSync(STORAGE_KEYS.USER_INFO, updatedUser);
+        this.setData({ userInfo: updatedUser });
       }
     } catch (err) {
       console.error('加载用户信息失败:', err);
@@ -57,7 +72,7 @@ Page({
     }
   },
 
-  // 获取错题数量
+  // 获取错题数量（使用 count 统计，避免获取全量数据）
   async getErrorCount() {
     try {
       const res = await cloud.call('getQuestions', { mode: 'error', limit: 1 });

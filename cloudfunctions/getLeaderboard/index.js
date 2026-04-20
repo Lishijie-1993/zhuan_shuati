@@ -40,15 +40,23 @@ exports.main = async (event, context) => {
     const myScore = myUser[sortField] || 0;
 
     // 计算当前用户排名：统计分数高于当前用户的用户数 + 1
-    // 这样避免了拉取全量数据的 100 条限制
     const higherCountRes = await db.collection('users')
       .where({
         [sortField]: _.gt(myScore)
       })
       .count();
 
-    const myRank = higherCountRes.total + 1;
+    // 计算同分人数（用于显示并列信息）
+    const equalCountRes = await db.collection('users')
+      .where({
+        [sortField]: _.eq(myScore)
+      })
+      .count();
 
+    const myRank = higherCountRes.total + 1;
+    const tiedCount = equalCountRes.total; // 与我同分的总人数
+
+    // 构建排行榜列表
     const list = rankRes.data.map((user, index) => ({
       rank: skip + index + 1,
       id: user._id,
@@ -61,9 +69,10 @@ exports.main = async (event, context) => {
       isMe: user._openid === openid
     }));
 
-    // 构建我的排名信息
+    // 构建我的排名信息（包含并列信息）
     const myRankInfo = {
       rank: myRank,
+      tiedCount: tiedCount,
       id: myUser._id,
       nickname: myUser.nickname || '我',
       avatar: myUser.avatar || '/images/icons/user.png',

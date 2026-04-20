@@ -13,7 +13,7 @@ exports.main = async (event, context) => {
   try {
     // 构建查询条件
     let query = {};
-    
+
     // 根据模式筛选
     if (mode === 'normal') {
       // 正常模式：指定章节
@@ -24,48 +24,8 @@ exports.main = async (event, context) => {
       // 乱序模式：随机获取题目
       query = {};
     } else if (mode === 'error') {
-      // 错题模式：支持分页获取用户的错题
-      const errorData = await fetchAllErrorData(openid);
-
-      const total = errorData.length;
-      const skip = (page - 1) * limit;
-      const pageData = errorData.slice(skip, skip + limit);
-
-      if (pageData.length === 0) {
-        return {
-          list: [],
-          total,
-          hasNext: false
-        };
-      }
-
-      const pageIds = pageData.map(e => e.question_id);
-
-      // 根据错题ID获取题目详情
-      const questionsRes = await db.collection('question_bank')
-        .where({
-          _id: db.command.in(pageIds)
-        })
-        .get();
-
-      // 保持原有顺序，合并错误次数
-      const errorMap = {};
-      pageData.forEach(e => { errorMap[e.question_id] = e; });
-
-      const list = pageIds
-        .map(id => questionsRes.data.find(q => q._id === id))
-        .filter(q => q)
-        .map(q => {
-          const formatted = formatQuestion(q);
-          formatted.errorCount = errorMap[q._id] ? errorMap[q._id].error_count || 1 : 1;
-          return formatted;
-        });
-
-      return {
-        list,
-        total,
-        hasNext: skip + list.length < total
-      };
+      // 错题模式：支持真正的分页获取
+      return await getErrorQuestions(openid, page, limit);
     } else if (mode === 'byIds') {
       // 根据ID列表获取题目
       const { ids = [] } = event;
@@ -98,13 +58,13 @@ exports.main = async (event, context) => {
 
     // 分页查询
     const skip = (page - 1) * limit;
-    
+
     if (mode === 'random') {
       // 乱序模式使用 aggregate + sample
       const aggregateRes = await db.collection('question_bank').aggregate()
         .sample({ size: limit })
         .end();
-      
+
       const list = aggregateRes.list.map(q => formatQuestion(q));
       return {
         list,
@@ -117,7 +77,7 @@ exports.main = async (event, context) => {
         .skip(skip)
         .limit(limit)
         .get();
-      
+
       const list = questionsRes.data.map(q => formatQuestion(q));
       return {
         list,
@@ -136,45 +96,69 @@ exports.main = async (event, context) => {
   }
 };
 
-// 分批获取所有错题数据（解决100条限制）
-async function fetchAllErrorData(openid) {
-  const BATCH_SIZE = 100;
-  const allErrors = [];
-  let skip = 0;
-  let hasMore = true;
+// 获取错题（真正的分页，避免内存溢出）
+async function getErrorQuestions(openid, page, limit) {
+  const skip = (page - 1) * limit;
 
-  while (hasMore) {
-    const res = await db.collection('user_errors')
-      .where(_.or([
-        { user_id: openid },
-        { _openid: openid }
-      ]))
-      .orderBy('last_wrong_time', 'desc')
-      .skip(skip)
-      .limit(BATCH_SIZE)
-      .get();
+  // 构建错题查询条件
+  const errorQuery = _.or([
+    { user_id: openid },
+    { _openid: openid }
+  ]);
 
-    allErrors.push(...res.data);
+  // 先获取符合条件的总记录数
+  const countRes = await db.collection('user_errors')
+    .where(errorQuery)
+    .count();
 
-    if (res.data.length < BATCH_SIZE) {
-      hasMore = false;
-    } else {
-      skip += BATCH_SIZE;
-    }
+  const total = countRes.total;
+
+  // 使用真正的数据库分页，按时间倒序获取错题ID
+  const errorRes = await db.collection('user_errors')
+    .where(errorQuery)
+    .orderBy('last_wrong_time', 'desc')
+    .skip(skip)
+    .limit(limit)
+    .get();
+
+  if (errorRes.data.length === 0) {
+    return {
+      list: [],
+      total,
+      hasNext: false
+    };
   }
 
-  // 去重（同一题目保留最新记录）
+  // 构建错题ID映射（记录错误次数）
   const errorMap = {};
-  allErrors.forEach(e => {
-    const existing = errorMap[e.question_id];
-    if (!existing || new Date(e.last_wrong_time) > new Date(existing.last_wrong_time)) {
-      errorMap[e.question_id] = e;
-    }
+  errorRes.data.forEach(e => {
+    errorMap[e.question_id] = e;
   });
 
-  return Object.values(errorMap).sort((a, b) =>
-    new Date(b.last_wrong_time) - new Date(a.last_wrong_time)
-  );
+  const pageIds = errorRes.data.map(e => e.question_id);
+
+  // 根据错题ID获取题目详情
+  const questionsRes = await db.collection('question_bank')
+    .where({
+      _id: _.in(pageIds)
+    })
+    .get();
+
+  // 保持分页顺序，合并错误次数
+  const list = pageIds
+    .map(id => questionsRes.data.find(q => q._id === id))
+    .filter(q => q)
+    .map(q => {
+      const formatted = formatQuestion(q);
+      formatted.errorCount = errorMap[q._id] ? errorMap[q._id].error_count || 1 : 1;
+      return formatted;
+    });
+
+  return {
+    list,
+    total,
+    hasNext: skip + list.length < total
+  };
 }
 
 // 格式化题目数据
