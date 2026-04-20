@@ -1,18 +1,70 @@
+// miniprogram/pages/history/index.js
+const cloud = require('../../utils/cloud.js');
+
 Page({
   data: {
-    historyList: [], // 后续对接数据库
+    historyList: [],
     stats: {
       totalCount: 0,
       highScore: 0,
       avgScore: 0
-    }
+    },
+    loading: true,
+    page: 1,
+    hasMore: true
   },
 
   onLoad() {
-    // 页面加载逻辑：后续此处调用云函数获取历史记录
+    this.loadHistory();
   },
 
-  // 返回功能
+  onShow() {
+    this.setData({ page: 1, historyList: [] });
+    this.loadHistory();
+  },
+
+  async loadHistory() {
+    if (this.data.loading === false && !this.data.hasMore) return;
+
+    try {
+      wx.showLoading({ title: '加载中...' });
+
+      const res = await cloud.getExamHistory(this.data.page);
+
+      if (res && res.list) {
+        const newList = this.data.page === 1 ? res.list : [...this.data.historyList, ...res.list];
+
+        const totalCount = newList.length;
+        const scores = newList.map(r => r.score).filter(s => s >= 0);
+        const highScore = scores.length > 0 ? Math.max(...scores) : 0;
+        const avgScore = scores.length > 0
+          ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+          : 0;
+
+        this.setData({
+          historyList: newList,
+          stats: { totalCount, highScore, avgScore },
+          loading: false,
+          hasMore: res.hasNext,
+          page: this.data.page + 1
+        });
+      } else {
+        this.setData({ loading: false, hasMore: false });
+      }
+
+      wx.hideLoading();
+    } catch (err) {
+      console.error('加载考试记录失败:', err);
+      this.setData({ loading: false, hasMore: false });
+      wx.hideLoading();
+    }
+  },
+
+  loadMore() {
+    if (!this.data.hasMore) return;
+    this.loadHistory();
+  },
+
   goBack() {
     const pages = getCurrentPages();
     if (pages.length > 1) {
@@ -22,9 +74,19 @@ Page({
     }
   },
 
-  // 查看详情（预留）
   viewDetail(e) {
-    const id = e.currentTarget.dataset.id;
-    wx.navigateTo({ url: `/pages/test/result?id=${id}` });
+    const recordId = e.currentTarget.dataset.id;
+    const record = this.data.historyList.find(r => r.id === recordId);
+    if (record) {
+      wx.navigateTo({
+        url: `/pages/test/result?score=${record.score}&recordId=${recordId}&isHistory=true`
+      });
+    }
+  },
+
+  onPullDownRefresh() {
+    this.setData({ page: 1, historyList: [], hasMore: true });
+    this.loadHistory();
+    setTimeout(() => { wx.stopPullDownRefresh(); }, 500);
   }
 });

@@ -7,15 +7,63 @@ page {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  padding-top: env(safe-area-inset-top);
 }
 
-/* 仪表盘统计 */
+/* =========================================
+   1. 头部整体背景区域：渐变覆盖状态栏至 Tab 栏
+   ========================================= */
+.header-section {
+  background: linear-gradient(180deg, #2D5CF6 0%, #4A7FFF 100%);
+  padding-bottom: 40rpx;
+}
+
+/* 状态栏高度适配 */
+.status-bar {
+  height: env(safe-area-inset-top);
+}
+
+/* 自定义导航栏区域 */
+.nav-bar {
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  padding: 0 30rpx;
+  position: relative;
+}
+
+.back-btn {
+  width: 80rpx;
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  z-index: 10;
+}
+
+.back-icon {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #fff;
+}
+
+.nav-title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 34rpx;
+  font-weight: bold;
+  color: #fff;
+}
+
+/* =========================================
+   2. 仪表盘统计区域
+   ========================================= */
 .stat-circle-wrapper {
   display: flex;
   justify-content: center;
-  padding: 40rpx 0;
-  background: linear-gradient(180deg, #2D5CF6 0%, #4A7FFF 100%);
+  padding: 20rpx 0 40rpx;
+  /* 移除重复的背景设置 */
 }
 
 .stat-circle {
@@ -43,13 +91,14 @@ page {
   color: rgba(255, 255, 255, 0.9);
 }
 
-/* 选项卡按钮 */
+/* =========================================
+   3. 选项卡切换
+   ========================================= */
 .tab-container {
   display: flex;
   justify-content: space-around;
   padding: 0 40rpx;
-  margin-top: 30rpx;
-  background: linear-gradient(180deg, #2D5CF6 0%, #4A7FFF 100%);
+  /* 移除重复的背景设置 */
 }
 
 .tab-btn {
@@ -69,7 +118,9 @@ page {
   font-weight: bold;
 }
 
-/* 内容区域 */
+/* =========================================
+   4. 内容列表区域
+   ========================================= */
 .content-section {
   flex: 1;
   padding: 40rpx 30rpx;
@@ -87,6 +138,7 @@ page {
   border-radius: 16rpx;
   padding: 30rpx;
   margin-bottom: 20rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
 }
 
 .error-q-type {
@@ -143,10 +195,13 @@ page {
   font-size: 28rpx;
 }
 
-/* 底部按钮 */
+/* =========================================
+   5. 底部固定操作按钮
+   ========================================= */
 .action-bar {
   padding: 20rpx 30rpx calc(20rpx + env(safe-area-inset-bottom));
   background: #fff;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.05);
 }
 
 .btn-retry {

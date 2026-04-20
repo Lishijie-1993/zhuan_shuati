@@ -37,6 +37,7 @@ exports.main = async (event, context) => {
       data: {
         user_id: openid,
         paper_id: paperId,
+        paper_title: paper.title || '模拟考试',
         snapshot_id: snapshotId,
         score: null,
         answers: {},

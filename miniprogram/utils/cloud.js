@@ -95,6 +95,13 @@ class CloudService {
     return await this.call('submitPaper', { snapshotId, answers, timeUsed });
   }
 
+  // ========== 考试记录相关 ==========
+
+  // 获取用户考试记录
+  async getExamHistory(page = 1, limit = 20) {
+    return await this.call('getExamHistory', { page, limit });
+  }
+
   // ========== 排行榜相关 ==========
 
   // 获取排行榜

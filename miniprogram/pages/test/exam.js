@@ -11,7 +11,8 @@ Page({
     timeLeft: 5400,
     timerText: "90:00",
     isSubmitting: false,
-    loading: true
+    loading: true,
+    snapshotId: null
   },
 
   onLoad(options) {
@@ -34,7 +35,8 @@ Page({
 
     this.setData({
       paperId: paperId,
-      paperTitle: paperTitle
+      paperTitle: paperTitle,
+      snapshotId: null
     });
 
     this.loadQuestions(paperId);
@@ -72,7 +74,8 @@ Page({
           questions: res.questions,
           timeLeft: (res.duration || 90) * 60,
           timerText: this.formatTimeText((res.duration || 90) * 60),
-          loading: false
+          loading: false,
+          snapshotId: res.snapshotId || paperId
         });
       } else {
         this.loadMockData();
@@ -177,8 +180,9 @@ Page({
     this.processResult();
   },
 
-  processResult() {
+  async processResult() {
     clearInterval(this.timer);
+
     let correctCount = 0;
     this.data.questions.forEach(q => {
       const userAns = this.data.userAnswers[q.id];
@@ -195,16 +199,34 @@ Page({
 
     const totalQuestions = this.data.questions.length;
     const score = Math.round((correctCount / totalQuestions) * 100);
+    const timeUsed = this.data.timeLeft > 0 ? this.data.timeLeft : 0;
 
     wx.showLoading({ title: '正在阅卷...' });
 
-    setTimeout(() => {
+    try {
+      const res = await cloud.submitPaper(
+        this.data.snapshotId || this.data.paperId,
+        this.data.userAnswers,
+        timeUsed
+      );
+
+      wx.hideLoading();
+      wx.disableAlertBeforeUnload();
+
+      const finalScore = (res && res.success) ? res.score : score;
+      const finalCorrect = (res && res.success) ? res.correctCount : correctCount;
+
+      wx.redirectTo({
+        url: `/pages/test/result?score=${finalScore}&correct=${finalCorrect}&total=${totalQuestions}&paperId=${this.data.paperId}&recordId=${this.data.snapshotId || this.data.paperId}`
+      });
+    } catch (err) {
+      console.error('提交试卷失败:', err);
       wx.hideLoading();
       wx.disableAlertBeforeUnload();
       wx.redirectTo({
-        url: `/pages/test/result?score=${score}&correct=${correctCount}&total=${totalQuestions}&paperId=${this.data.paperId}`
+        url: `/pages/test/result?score=${score}&correct=${correctCount}&total=${totalQuestions}&paperId=${this.data.paperId}&recordId=${this.data.snapshotId || this.data.paperId}`
       });
-    }, 1500);
+    }
   },
 
   onUnload() {

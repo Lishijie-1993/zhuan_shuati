@@ -1,5 +1,6 @@
 <view class="container">
-  <!-- 顶部导航栏 -->
+  <view class="status-bar"></view>
+
   <view class="nav-bar">
     <view class="nav-left" bindtap="goHome">
       <text class="nav-back-icon">〈</text>
@@ -28,18 +29,18 @@
         </view>
         <view class="detail-item">
           <text class="detail-label">总题数</text>
-          <text class="detail-value">{{totalCount}} 题</text>
+          <text class="detail-value">{{totalCount}} 题 </text>
         </view>
         <view class="detail-item">
           <text class="detail-label">正确率</text>
-          <text class="detail-value">{{accuracy}}%</text>
+          <text class="detail-value">{{accuracy}}% </text>
         </view>
       </view>
     </view>
 
     <view class="actions">
-      <button class="btn-action secondary" bindtap="viewAnalysis">查看解析</button>
-      <button class="btn-action" bindtap="doAgain">再做一次</button>
+      <button class="btn-action secondary" bindtap="viewAnalysis">查看解析 </button>
+      <button class="btn-action" bindtap="doAgain">再做一次 </button>
     </view>
   </view>
 </view>
