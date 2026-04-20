@@ -143,3 +143,21 @@ page {
   font-weight: 500;
   color: #2D5CF6;
 }
+/* 空状态居中显示 */
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 28rpx;
+  height: 60vh; /* 给它一个足够的高度，确保它能撑开页面 */
+}
+
+.empty-icon {
+  width: 200rpx;
+  height: 200rpx;
+  margin-bottom: 30rpx;
+  opacity: 0.5;
+}
