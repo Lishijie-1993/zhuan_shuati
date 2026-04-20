@@ -1,113 +1,247 @@
-/* 确保页面高度占满全屏 */
 page {
-  background-color: #ffffff;
-  height: 100%;
+  background-color: #f8f9fb;
+}
+
+.container {
+  min-height: 100vh;
+}
+
+/* =========================================
+   1. 头部区域：渐变背景 + 自定义导航栏
+   ========================================= */
+.header {
+  background: linear-gradient(180deg, #2D5CF6 0%, #4A7FFF 100%);
+  padding-top: env(safe-area-inset-top); 
+  padding-left: 40rpx;
+  padding-right: 40rpx;
+  padding-bottom: 120rpx; 
+  color: #fff;
+  position: relative;
   overflow: hidden;
 }
 
-/* 主容器：使用 Flex 布局让左右并排 */
-.container {
-  display: flex;
-  height: 100vh;
-  width: 100%;
-}
-
-/* 左侧栏 */
-.nav-left {
-  width: 220rpx;
-  background-color: #f7f7f7;
-  height: 100%;
-}
-
-.nav-item {
-  height: 100rpx;
+/* 自定义导航栏区域 */
+.nav-bar {
+  height: 44px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 26rpx;
-  color: #666666;
-  padding: 0 20rpx;
-  text-align: center;
+  position: relative;
+  z-index: 11;
 }
 
-/* 激活态样式：左侧蓝色边框 */
-.nav-item.active {
-  background-color: #ffffff;
-  color: #2D5CF6;
+.back-icon {
+  font-size: 44rpx;
   font-weight: bold;
-  border-left: 8rpx solid #2D5CF6;
+  color: #fff;
 }
 
-/* 右侧内容区 */
-.nav-right {
-  flex: 1;
-  height: 100%;
-  background-color: #ffffff;
+.header-content {
+  margin-top: 20rpx;
 }
 
-/* 内部间距包裹 */
-.content-wrapper {
-  padding: 0 30rpx 40rpx;
+.header-bg-icon {
+  position: absolute;
+  right: -20rpx;
+  top: 60rpx;
+  font-size: 200rpx;
+  opacity: 0.1;
 }
 
-/* 标题区域 */
-.category-header {
+.header-title {
+  font-size: 44rpx;
+  font-weight: bold;
+  display: block;
+}
+
+/* =========================================
+   2. 选择卡片区域
+   ========================================= */
+.selection-section {
+  margin: -80rpx 30rpx 0;
+  position: relative;
+  z-index: 10;
+}
+
+.select-card {
+  background: #fff;
+  border-radius: 16rpx;
+  height: 110rpx;
   display: flex;
   align-items: center;
-  padding: 30rpx 0;
-  margin-bottom: 10rpx;
+  padding: 0 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
+  transition: all 0.2s;
+}
+
+.select-card:active:not(.readonly-card) {
+  background-color: #f0f0f0;
+  transform: scale(0.98);
+}
+
+.readonly-card {
+  background-color: #fcfcfc;
+  box-shadow: none;
+  border: 1rpx solid #eee;
+}
+
+.readonly-card .card-text {
+  color: #666;
 }
 
 .dot {
-  width: 10rpx;
-  height: 10rpx;
-  background-color: #2D5CF6;
+  width: 14rpx;
+  height: 14rpx;
+  background-color: #5d8aff;
   border-radius: 50%;
-  margin-right: 15rpx;
+  margin-right: 30rpx;
 }
 
-.category-main-title {
-  font-size: 28rpx;
-  font-weight: bold;
-  color: #333333;
-}
-
-/* 章节项布局：标题在左，GO按钮在右 */
-.chapter-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 35rpx 0;
-  border-bottom: 1rpx solid #f2f2f2;
-}
-
-.chapter-title {
-  font-size: 28rpx;
-  color: #333333;
+.card-text {
   flex: 1;
-  margin-right: 20rpx;
-  line-height: 1.5;
+  font-size: 30rpx;
+  color: #333;
 }
 
-/* GO 按钮样式 */
-.go-btn {
-  width: 84rpx;
-  height: 46rpx;
-  line-height: 46rpx;
-  text-align: center;
-  background-color: #f0f4ff;
+.arrow {
+  color: #ccc;
+  font-size: 26rpx;
+}
+
+/* =========================================
+   3. 分割线与章节网格
+   ========================================= */
+.divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60rpx 0 40rpx;
+}
+
+.line {
+  width: 80rpx;
+  height: 2rpx;
+  background-color: #2D5CF6;
+  opacity: 0.5;
+}
+
+.divider-text {
+  font-size: 26rpx;
   color: #2D5CF6;
-  border-radius: 23rpx;
-  font-size: 22rpx;
-  font-weight: bold;
-  flex-shrink: 0;
+  margin: 0 20rpx;
+}
+
+.chapter-grid {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0 20rpx 40rpx;
+}
+
+.grid-item {
+  width: 44%;
+  margin: 0 3% 24rpx;
+  background-color: #5d8aff;
+  color: #fff;
+  height: 90rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12rpx;
+  font-size: 26rpx;
+  text-align: center;
+  padding: 0 10rpx;
+  box-shadow: 0 6rpx 12rpx rgba(93, 138, 255, 0.2);
+}
+
+.grid-item:active {
+  opacity: 0.8;
 }
 
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 100rpx;
+  padding: 100rpx 0;
   color: #999999;
   font-size: 26rpx;
+}
+
+/* =========================================
+   4. Picker 选择器弹窗样式
+   ========================================= */
+.picker-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mask {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.picker-content {
+  position: relative;
+  width: 80%;
+  background: #fff;
+  border-radius: 12rpx;
+  overflow: hidden;
+  animation: fadeInCenter 0.3s ease-out;
+}
+
+.picker-item-normal {
+  color: #ccc;
+  font-size: 32rpx;
+}
+
+.picker-item-active {
+  color: #333;
+  font-size: 36rpx;
+  font-weight: 500;
+}
+
+.picker-buttons {
+  display: flex;
+  padding: 30rpx;
+  gap: 20rpx;
+  background: #2a2a2a;
+}
+
+.btn-cancel, .btn-confirm {
+  flex: 1;
+  height: 88rpx;
+  line-height: 88rpx;
+  font-size: 32rpx;
+  border-radius: 8rpx;
+  padding: 0;
+  border: none;
+}
+
+.btn-cancel {
+  background-color: #3d3d3d;
+  color: #ffffff;
+}
+
+.btn-confirm {
+  background-color: #07c160;
+  color: #ffffff;
+}
+
+@keyframes fadeInCenter {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }

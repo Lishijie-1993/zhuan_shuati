@@ -1,5 +1,12 @@
 <view class="container">
 
+<view class="header">
+  <view class="status-bar"></view>
+  <view class="nav-bar">
+    <text class="nav-title">刷题神器</text>
+  </view>
+</view>
+
 <view class="header-banner">
   <view class="banner-left">
     <text class="banner-title">安全工程师</text>

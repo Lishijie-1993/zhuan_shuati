@@ -1,6 +1,4 @@
 {
   "usingComponents": {},
-  "navigationBarTitleText": "刷题神器",
-  "navigationBarBackgroundColor": "#2D5CF6",
-  "navigationBarTextStyle": "white"
+  "navigationStyle": "custom"
 }

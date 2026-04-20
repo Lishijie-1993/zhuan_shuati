@@ -1,39 +1,80 @@
 <view class="container">
-  <scroll-view class="nav-left" scroll-y>
-    <view
-      class="nav-item {{activeCategory === index ? 'active' : ''}}"
-      wx:for="{{categories}}"
-      wx:key="name"
-      bindtap="switchCategory"
-      data-index="{{index}}"
+  <view class="header">
+    <view class="status-bar"></view>
+    
+    <view class="nav-bar">
+      <view class="back-btn" bindtap="goBack">
+        <text class="back-icon">〈</text>
+      </view>
+    </view>
+
+    <view class="header-content">
+      <view class="header-bg-icon">📚</view>
+      <text class="header-title">专项刷题</text>
+    </view>
+  </view>
+
+  <view class="selection-section">
+    <view class="select-card" bindtap="openPicker">
+      <view class="dot"></view>
+      <text class="card-text">{{selectedIndustry}}</text>
+      <text class="arrow">〉</text>
+    </view>
+    
+    <view class="select-card readonly-card">
+      <view class="dot"></view>
+      <text class="card-text">{{selectedType}} 《{{selectedIndustry}}》</text>
+      <text class="arrow" style="opacity: 0;">〉</text> 
+    </view>
+  </view>
+
+  <view class="divider">
+    <view class="line"></view>
+    <text class="divider-text">点击选择要进入的题库</text>
+    <view class="line"></view>
+  </view>
+
+  <view class="chapter-grid">
+    <view 
+      class="grid-item" 
+      wx:for="{{chapters}}" 
+      wx:key="*this"
+      bindtap="startQuiz"
+      data-title="{{item}}"
     >
-      {{item.name}}
+      {{item}}
     </view>
-  </scroll-view>
+  </view>
 
-  <scroll-view class="nav-right" scroll-y>
-    <view class="content-wrapper">
-      <view class="category-header">
-        <view class="dot"></view>
-        <text class="category-main-title">{{categories[activeCategory].type}} 《{{categories[activeCategory].name}}》</text>
-      </view>
+  <view class="empty-state" wx:if="{{chapters.length === 0}}">
+    <text>暂无内容，敬请期待</text>
+  </view>
 
-      <view class="chapter-box">
-        <view
-          class="chapter-item"
-          wx:for="{{categories[activeCategory].chapters}}"
-          wx:key="*this"
-          bindtap="startQuiz"
-          data-title="{{item}}"
-        >
-          <text class="chapter-title">{{item}}</text>
-          <view class="go-btn">GO</view>
-        </view>
-      </view>
-
-      <view class="empty-state" wx:if="{{categories[activeCategory].chapters.length === 0}}">
-        <text>暂无内容，敬请期待</text>
+  <view class="picker-modal" wx:if="{{showPicker}}">
+    <view class="mask" bindtap="closePicker"></view>
+    <view class="picker-content">
+      <picker-view 
+        indicator-style="height: 50px;" 
+        style="width: 100%; height: 250px;" 
+        value="{{pickerValue}}" 
+        bindchange="onPickerChange"
+      >
+        <picker-view-column>
+          <view 
+            wx:for="{{industryOptions}}" 
+            wx:key="*this" 
+            style="line-height: 50px; text-align: center;"
+            class="{{item === tempSelected ? 'picker-item-active' : 'picker-item-normal'}}"
+          >
+            {{item}}
+          </view>
+        </picker-view-column>
+      </picker-view>
+      
+      <view class="picker-buttons">
+        <button class="btn-cancel" bindtap="closePicker">取消</button>
+        <button class="btn-confirm" bindtap="confirmSelection">确定</button>
       </view>
     </view>
-  </scroll-view>
+  </view>
 </view>

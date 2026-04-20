@@ -1,6 +1,4 @@
 {
   "usingComponents": {},
-  "navigationBarTitleText": "专项刷题",
-  "navigationBarBackgroundColor": "#ffffff",
-  "navigationBarTextStyle": "black"
+  "navigationStyle": "custom"
 }
