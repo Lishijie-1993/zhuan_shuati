@@ -17,12 +17,7 @@
     <text>收藏夹中暂无题目</text>
   </view>
 
-  <swiper 
-    wx:else 
-    class="quiz-swiper" 
-    current="{{currentIndex}}" 
-    bindchange="onSwiperChange"
-  >
+  <swiper wx:else class="quiz-swiper" current="{{currentIndex}}" bindchange="onSwiperChange">
     <swiper-item wx:for="{{favorites}}" wx:key="id" wx:for-index="qIndex">
       <scroll-view scroll-y class="quiz-content">
         <view class="question-info">
@@ -34,21 +29,22 @@
 
         <view class="options-list">
           <view 
-            class="option-item {{ (mode === 'recite' && opt.id === item.correctAnswer) || (mode === 'answer' && userAnswers[qIndex] === opt.id && opt.id === item.correctAnswer) ? 'active-correct' : '' }} {{ mode === 'answer' && userAnswers[qIndex] === opt.id && opt.id !== item.correctAnswer ? 'active-error' : '' }}" 
+            class="option-item {{ (mode === 'recite' && opt.id === item.correctAnswer) || (mode === 'answer' && userAnswers[item.id] === opt.id && opt.id === item.correctAnswer) ? 'active-correct' : '' }} {{ mode === 'answer' && userAnswers[item.id] === opt.id && opt.id !== item.correctAnswer ? 'active-error' : '' }}" 
             wx:for="{{item.options}}" 
             wx:for-item="opt"
             wx:key="id"
             bindtap="selectOption"
-            data-id="{{opt.id}}"
+            data-opt-id="{{opt.id}}"
+            data-q-id="{{item.id}}"
             data-index="{{qIndex}}"
           >
             <text class="option-label">{{opt.id}}. {{opt.text}}</text>
-            <icon wx:if="{{ (mode === 'recite' && opt.id === item.correctAnswer) || (mode === 'answer' && userAnswers[qIndex] === opt.id && opt.id === item.correctAnswer) }}" type="success" size="18" color="#07C160"></icon>
-            <icon wx:if="{{ mode === 'answer' && userAnswers[qIndex] === opt.id && opt.id !== item.correctAnswer }}" type="warn" size="18" color="#FA5151"></icon>
+            <icon wx:if="{{ (mode === 'recite' && opt.id === item.correctAnswer) || (mode === 'answer' && userAnswers[item.id] === opt.id && opt.id === item.correctAnswer) }}" type="success" size="18" color="#07C160"></icon>
+            <icon wx:if="{{ mode === 'answer' && userAnswers[item.id] === opt.id && opt.id !== item.correctAnswer }}" type="warn" size="18" color="#FA5151"></icon>
           </view>
         </view>
 
-        <view class="analysis-box" wx:if="{{mode === 'recite' || userAnswers[qIndex] || showAnalysisMap[qIndex]}}">
+        <view class="analysis-box" wx:if="{{mode === 'recite' || userAnswers[item.id] || showAnalysisMap[item.id]}}">
           <view class="analysis-header">
             <text class="analysis-title">试题解析</text>
           </view>

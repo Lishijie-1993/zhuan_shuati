@@ -1,27 +1,27 @@
 Page({
   data: {
-    favorites: [],
+    favorites: [],      // 题目数据源
     currentIndex: 0,
     mode: 'answer',
     isAutoNext: false,
-    userAnswers: {},
-    showAnalysisMap: {},
+    userAnswers: {},     // 记录用户答案，键为题目 ID
+    showAnalysisMap: {}, // 记录解析显示状态，键为题目 ID
   },
 
   onShow() {
+    // 从缓存读取数据
     const list = wx.getStorageSync('my_favorites') || [];
+    // 【修改点1】确保调用了 setData 且键名为 favorites，界面才会刷新
     this.setData({ 
       favorites: list,
       userAnswers: {},
       showAnalysisMap: {}
     });
-    // 固定设置标题
     wx.setNavigationBarTitle({ title: '我的收藏' });
   },
 
   onSwiperChange(e) {
     this.setData({ currentIndex: e.detail.current });
-    // 删除了之前在这里动态修改标题的代码，保持标题为“我的收藏”
   },
 
   switchMode(e) {
@@ -40,15 +40,16 @@ Page({
   },
 
   selectOption(e) {
-    const { id, index } = e.currentTarget.dataset;
+    const { optId, qId, index } = e.currentTarget.dataset;
     const currentQuestion = this.data.favorites[index];
-    if (this.data.mode === 'recite' || this.data.userAnswers[index]) return;
+    
+    if (this.data.mode === 'recite' || this.data.userAnswers[qId]) return;
 
     const userAnswers = this.data.userAnswers;
-    userAnswers[index] = id;
+    userAnswers[qId] = optId; 
     this.setData({ userAnswers });
 
-    if (this.data.isAutoNext && id === currentQuestion.correctAnswer) {
+    if (this.data.isAutoNext && optId === currentQuestion.correctAnswer) {
       if (index < this.data.favorites.length - 1) {
         setTimeout(() => { this.setData({ currentIndex: index + 1 }); }, 800);
       }
@@ -57,13 +58,20 @@ Page({
 
   onFavorite() {
     const index = this.data.currentIndex;
-    let list = this.data.favorites;
+    let list = [...this.data.favorites]; // 使用展开运算符深拷贝
+    
+    if (list.length === 0) return;
+
     list.splice(index, 1);
     wx.setStorageSync('my_favorites', list);
+    
+    // 【修改点1】移除题目后立即 setData 更新视图
     this.setData({ favorites: list });
+    
     if (this.data.currentIndex >= list.length && list.length > 0) {
       this.setData({ currentIndex: list.length - 1 });
     }
+    
     wx.showToast({ title: '已移出收藏', icon: 'none' });
   },
 
@@ -80,8 +88,10 @@ Page({
   },
 
   onAnalysis() {
+    if (this.data.favorites.length === 0) return;
+    const currentQ = this.data.favorites[this.data.currentIndex];
     const showAnalysisMap = this.data.showAnalysisMap;
-    showAnalysisMap[this.data.currentIndex] = true;
+    showAnalysisMap[currentQ.id] = true;
     this.setData({ showAnalysisMap });
   },
 
