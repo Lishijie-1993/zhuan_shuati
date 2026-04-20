@@ -10,47 +10,74 @@ Page({
     userAnswers: {},
     showAnalysisMap: {},
     loading: true,
+    loadingMore: false,
+    hasMore: true,
+    page: 1,
+    total: 0,
     debugInfo: ''
   },
 
   onShow() {
+    this.resetAndLoad();
+  },
+
+  // 重置并重新加载
+  resetAndLoad() {
+    this.setData({
+      page: 1,
+      favorites: [],
+      hasMore: true,
+      loading: true,
+      currentIndex: 0
+    });
     this.loadFavorites();
   },
 
   // 从云端加载收藏数据
   async loadFavorites() {
+    if (this.data.loadingMore || (!this.data.hasMore && this.data.page > 1)) return;
+
     console.log('[favorite] ========== 开始加载收藏数据 ==========');
-    console.log('[favorite] 1. 开始调用云函数...');
+    console.log('[favorite] 当前页:', this.data.page);
 
     try {
-      wx.showLoading({ title: '加载中...' });
+      if (this.data.page === 1) {
+        wx.showLoading({ title: '加载中...' });
+      }
+
+      this.setData({ loadingMore: true });
 
       // 调用云函数获取收藏列表
-      console.log('[favorite] 2. 调用 toggleFavorite 云函数...');
-      const res = await cloud.toggleFavorite(null, 'list');
+      const res = await cloud.toggleFavorite(null, 'list', this.data.page, 50);
 
-      console.log('[favorite] 3. 云函数返回结果:', JSON.stringify(res, null, 2));
+      console.log('[favorite] 云函数返回结果:', JSON.stringify(res, null, 2));
 
       if (res && res.list) {
-        console.log('[favorite] 4. 收藏数据条数:', res.list.length);
-        console.log('[favorite] 5. 收藏数据详情:', JSON.stringify(res.list.slice(0, 2), null, 2));
+        const newList = this.data.page === 1 ? res.list : [...this.data.favorites, ...res.list];
+
+        console.log('[favorite] 收藏数据条数:', res.list.length, '总条数:', res.total);
 
         this.setData({
-          favorites: res.list,
+          favorites: newList,
           currentIndex: 0,
           loading: false,
-          debugInfo: `加载成功，共 ${res.list.length} 条收藏`
+          loadingMore: false,
+          hasNext: res.hasNext !== false,
+          hasMore: res.hasNext !== false,
+          total: res.total || newList.length,
+          page: this.data.page + 1,
+          debugInfo: `加载成功，共 ${res.total} 条收藏`
         });
 
-        console.log('[favorite] 6. 数据已设置到 favorites');
+        console.log('[favorite] 数据已设置到 favorites');
       } else {
-        console.log('[favorite] 4. 云函数返回的 list 为空或 undefined');
-        console.log('[favorite]    res:', JSON.stringify(res));
+        console.log('[favorite] 云函数返回的 list 为空或 undefined');
 
         this.setData({
-          favorites: [],
-          currentIndex: 0,
+          favorites: this.data.page === 1 ? [] : this.data.favorites,
           loading: false,
+          loadingMore: false,
+          hasMore: false,
           debugInfo: '云函数返回数据为空'
         });
       }
@@ -59,16 +86,22 @@ Page({
     } catch (err) {
       console.error('[favorite] ========== 加载收藏失败 ==========');
       console.error('[favorite] 错误详情:', err);
-      console.error('[favorite] 错误消息:', err.message || err.errMsg || JSON.stringify(err));
 
       this.setData({
-        favorites: [],
-        currentIndex: 0,
         loading: false,
+        loadingMore: false,
         debugInfo: `加载失败: ${err.message || err.errMsg || '未知错误'}`
       });
 
       wx.hideLoading();
+    }
+  },
+
+  // 滚动到底部时加载更多
+  onScrollToLower() {
+    if (this.data.hasMore && !this.data.loadingMore) {
+      console.log('[favorite] 滚动到底部，加载更多...');
+      this.loadFavorites();
     }
   },
 
@@ -84,11 +117,17 @@ Page({
     const newIndex = e.detail.current;
     if (newIndex >= 0 && newIndex < this.data.favorites.length) {
       console.log('[favorite] 滑动切换，当前索引:', newIndex);
-      this.setData({ 
+      this.setData({
         currentIndex: newIndex,
         userAnswers: {},
         showAnalysisMap: {}
       });
+
+      // 如果快到列表末尾且还有更多数据，自动加载
+      if (newIndex >= this.data.favorites.length - 5 && this.data.hasMore && !this.data.loadingMore) {
+        console.log('[favorite] 快到列表末尾，预加载更多...');
+        this.loadFavorites();
+      }
     }
   },
 
@@ -175,13 +214,10 @@ Page({
         // 安全地计算新的索引
         let newIndex = 0;
         if (list.length === 0) {
-          // 列表为空时，重置索引和状态
           newIndex = 0;
         } else if (index >= list.length) {
-          // 删除的是最后一项，新索引指向最后一项
           newIndex = list.length - 1;
         } else {
-          // 删除中间项，保持当前索引位置
           newIndex = index;
         }
 
@@ -229,6 +265,12 @@ Page({
         userAnswers: {},
         showAnalysisMap: {}
       });
+
+      // 如果快到列表末尾且还有更多数据，自动加载
+      if (this.data.currentIndex >= this.data.favorites.length - 5 && this.data.hasMore && !this.data.loadingMore) {
+        console.log('[favorite] 快到列表末尾，预加载更多...');
+        this.loadFavorites();
+      }
     } else {
       wx.showToast({ title: '已经是最后一题了', icon: 'none' });
     }

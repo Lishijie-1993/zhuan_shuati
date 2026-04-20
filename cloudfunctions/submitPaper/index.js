@@ -6,7 +6,7 @@ const db = cloud.database();
 const _ = db.command;
 
 exports.main = async (event, context) => {
-  const { snapshotId, answers, timeUsed } = event;
+  const { snapshotId, answers } = event;  // 不再信任前端传来的 timeUsed
   const wxContext = cloud.getWXContext();
   const openid = wxContext.OPENID;
 
@@ -27,15 +27,32 @@ exports.main = async (event, context) => {
     const record = recordRes.data[0];
     const questionIds = record.question_ids || [];
 
-    // 获取题目详情用于判分
-    const questionsRes = await db.collection('question_bank').where({
-      _id: _.in(questionIds)
-    }).get();
+    // 【安全修复】服务端计算实际用时，不信任客户端数据
+    const startTime = new Date(record.start_time);
+    const submitTime = new Date();
+    const serverTimeUsed = Math.floor((submitTime - startTime) / 1000);  // 秒
 
-    const questionsMap = {};
-    questionsRes.data.forEach(q => {
-      questionsMap[q._id] = q;
-    });
+    // 如果前端传来的 timeUsed 合理（不超过服务端计算的2倍），可以参考但以服务端为准
+    // 如果客户端时间明显异常，直接使用服务端计算的时间
+    let finalTimeUsed = serverTimeUsed;
+
+    // 【新增】如果题目快照存在，使用快照中的题目数据（不可变）
+    let questionsMap = {};
+    if (record.question_snapshot && Array.isArray(record.question_snapshot)) {
+      // 使用快照数据（考试开始时保存的题目快照）
+      record.question_snapshot.forEach(q => {
+        questionsMap[q._id] = q;
+      });
+    } else {
+      // 兼容旧数据：回退到实时查询（但不推荐）
+      const questionsRes = await db.collection('question_bank').where({
+        _id: _.in(questionIds)
+      }).get();
+
+      questionsRes.data.forEach(q => {
+        questionsMap[q._id] = q;
+      });
+    }
 
     // 判分
     let score = 0;
@@ -117,7 +134,7 @@ exports.main = async (event, context) => {
     // 对总分进行四舍五入，确保得到整数
     score = Math.round(score);
 
-    // 更新考试记录
+    // 更新考试记录（使用服务端计算的时间）
     const now = new Date();
     await db.collection('user_exam_records').where({
       _id: record._id
@@ -127,7 +144,7 @@ exports.main = async (event, context) => {
         answers,
         submit_time: now,
         status: 'completed',
-        time_used: timeUsed,
+        time_used: finalTimeUsed,  // 使用服务端计算的时间
         updated_at: now
       }
     });

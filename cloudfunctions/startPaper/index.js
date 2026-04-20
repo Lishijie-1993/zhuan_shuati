@@ -31,7 +31,22 @@ exports.main = async (event, context) => {
     // 生成快照ID
     const snapshotId = `snap_${openid}_${paperId}_${Date.now()}`;
 
-    // 创建考试快照记录
+    // 【新增】获取题目完整快照数据
+    let questionSnapshot = [];
+    if (questionIds.length > 0) {
+      const questionsRes = await db.collection('question_bank')
+        .where({
+          _id: _.in(questionIds)
+        })
+        .get();
+
+      // 按原始顺序排列题目，保存完整快照
+      questionSnapshot = questionIds
+        .map(id => questionsRes.data.find(q => q._id === id))
+        .filter(q => q);
+    }
+
+    // 创建考试快照记录（包含题目完整快照）
     const now = new Date();
     await db.collection('user_exam_records').add({
       data: {
@@ -41,7 +56,8 @@ exports.main = async (event, context) => {
         snapshot_id: snapshotId,
         score: null,
         answers: {},
-        question_ids: questionIds,
+        question_ids: questionIds,  // 保留ID列表（用于关联）
+        question_snapshot: questionSnapshot,  // 【新增】保存题目完整快照（不可变）
         start_time: now,
         submit_time: null,
         status: 'in_progress',
@@ -51,29 +67,15 @@ exports.main = async (event, context) => {
       }
     });
 
-    // 获取题目详情
-    let questions = [];
-    if (questionIds.length > 0) {
-      const questionsRes = await db.collection('question_bank')
-        .where({
-          _id: _.in(questionIds)
-        })
-        .get();
-
-      // 按原始顺序排列题目
-      questions = questionIds
-        .map(id => questionsRes.data.find(q => q._id === id))
-        .filter(q => q)
-        .map(q => ({
-          id: q._id,
-          type: q.type === 'single' ? 'single' : (q.type === 'multiple' ? 'multiple' : 'judge'),
-          title: q.content,
-          options: formatOptions(q.options),
-          // 解析答案字段，支持多种格式
-          answer: parseAnswer(q.correct_answer, q.type),
-          analysis: q.analysis || ''
-        }));
-    }
+    // 格式化返回给前端的题目数据（不含正确答案）
+    const questions = questionSnapshot.map(q => ({
+      id: q._id,
+      type: q.type === 'single' ? 'single' : (q.type === 'multiple' ? 'multiple' : 'judge'),
+      title: q.content,
+      options: formatOptions(q.options),
+      answer: parseAnswer(q.correct_answer, q.type),
+      analysis: q.analysis || ''
+    }));
 
     return {
       success: true,

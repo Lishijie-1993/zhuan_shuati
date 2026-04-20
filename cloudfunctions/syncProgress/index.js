@@ -22,13 +22,22 @@ exports.main = async (event, context) => {
     const now = new Date();
 
     if (progressRes.data.length > 0) {
-      // 更新已有进度
+      const existingRecord = progressRes.data[0];
+      const existingMaxIndex = existingRecord.max_index || existingRecord.last_index || 0;
+      const existingCorrectCount = existingRecord.max_correct_count || existingRecord.correct_count || 0;
+
+      // 【修复】只更新最大探索深度，不覆盖倒退的进度
+      const newMaxIndex = Math.max(existingMaxIndex, currentIndex);
+      const newMaxCorrectCount = Math.max(existingCorrectCount, correctCount);
+
       await db.collection('user_quiz_progress').where({
-        _id: progressRes.data[0]._id
+        _id: existingRecord._id
       }).update({
         data: {
-          last_index: currentIndex,
-          correct_count: correctCount,
+          last_index: currentIndex,  // 记录当前位置
+          max_index: newMaxIndex,  // 记录最大探索深度
+          last_correct_count: correctCount,
+          max_correct_count: newMaxCorrectCount,
           last_time: now,
           updated_at: now
         }
@@ -40,7 +49,9 @@ exports.main = async (event, context) => {
           user_id: openid,
           chapter_title: queryChapter,
           last_index: currentIndex,
-          correct_count: correctCount,
+          max_index: currentIndex,
+          last_correct_count: correctCount,
+          max_correct_count: correctCount,
           last_time: now,
           created_at: now,
           updated_at: now

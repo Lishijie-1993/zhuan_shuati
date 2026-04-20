@@ -6,7 +6,7 @@ const db = cloud.database();
 const _ = db.command;
 
 exports.main = async (event, context) => {
-  const { questionId, action } = event;
+  const { questionId, action, page = 1, limit = 50 } = event;
   const wxContext = cloud.getWXContext();
   const openid = wxContext.OPENID;
 
@@ -15,20 +15,33 @@ exports.main = async (event, context) => {
     const qId = questionId || event.question_id;
 
     if (action === 'list') {
-      // 获取收藏列表
+      // 【修复】获取收藏列表 - 支持真正的分页
+      const skip = (page - 1) * limit;
+
+      // 先获取符合条件的总记录数
+      const countRes = await db.collection('user_favorites')
+        .where({ user_id: openid })
+        .count();
+
+      const total = countRes.total;
+
+      // 使用真正的分页查询
       const favRes = await db.collection('user_favorites')
         .where({ user_id: openid })
         .orderBy('created_at', 'desc')
+        .skip(skip)
+        .limit(limit)
         .get();
 
       // 获取题目详情
       const questionIds = favRes.data.map(f => f.question_id);
       if (questionIds.length === 0) {
-        return { status: 'ok', list: [] };
+        return { status: 'ok', list: [], total: 0, hasNext: false };
       }
 
+      // 批量获取题目详情（支持分页）
       const questionsRes = await db.collection('question_bank')
-        .where({ _id: db.command.in(questionIds) })
+        .where({ _id: _.in(questionIds) })
         .get();
 
       const list = questionIds
@@ -44,7 +57,14 @@ exports.main = async (event, context) => {
           type: q.type
         }));
 
-      return { status: 'ok', list };
+      return {
+        status: 'ok',
+        list,
+        total,
+        page,
+        limit,
+        hasNext: skip + list.length < total
+      };
     }
 
     if (action === 'add') {

@@ -67,8 +67,8 @@ class CloudService {
   // ========== 收藏相关 ==========
 
   // 切换收藏
-  async toggleFavorite(questionId, action) {
-    return await this.call('toggle', { questionId, action });
+  async toggleFavorite(questionId, action, page = 1, limit = 50) {
+    return await this.call('toggle', { questionId, action, page, limit });
   }
 
   // ========== 错题相关 ==========
@@ -90,9 +90,9 @@ class CloudService {
     return await this.call('startPaper', { paperId });
   }
 
-  // 提交试卷
-  async submitPaper(snapshotId, answers, timeUsed) {
-    return await this.call('submitPaper', { snapshotId, answers, timeUsed });
+  // 提交试卷（服务端计算用时）
+  async submitPaper(snapshotId, answers) {
+    return await this.call('submitPaper', { snapshotId, answers });
   }
 
   // ========== 考试记录相关 ==========

@@ -215,17 +215,17 @@ Page({
 
     const totalQuestions = this.data.questions.length;
     const score = Math.round((correctCount / totalQuestions) * 100);
-    // 计算实际用时 = 总时长 - 剩余时间
+    // 计算实际用时（服务端会重新计算，这里只用于本地显示）
     const totalTime = this.examDuration || this.data.timeLeft;
     const timeUsed = Math.max(0, totalTime - this.data.timeLeft);
 
     wx.showLoading({ title: '正在阅卷...' });
 
     try {
+      // 只传递 snapshotId 和 answers，不传 timeUsed（服务端会计算）
       const res = await cloud.submitPaper(
         this.data.snapshotId || this.data.paperId,
-        this.data.userAnswers,
-        timeUsed
+        this.data.userAnswers
       );
 
       wx.hideLoading();
