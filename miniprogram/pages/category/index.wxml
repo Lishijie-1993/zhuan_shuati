@@ -1,4 +1,4 @@
-<view class="category-container">
+<view class="container">
   <scroll-view class="nav-left" scroll-y>
     <view
       class="nav-item {{activeCategory === index ? 'active' : ''}}"
@@ -12,15 +12,27 @@
   </scroll-view>
 
   <scroll-view class="nav-right" scroll-y>
-    <view class="category-header">
-      <view class="dot"></view>
-      <text class="category-main-title">{{categories[activeCategory].type}} 《{{categories[activeCategory].name}}》</text>
-    </view>
+    <view class="content-wrapper">
+      <view class="category-header">
+        <view class="dot"></view>
+        <text class="category-main-title">{{categories[activeCategory].type}} 《{{categories[activeCategory].name}}》</text>
+      </view>
 
-    <view class="chapter-box">
-      <view class="chapter-row" wx:for="{{categories[activeCategory].chapters}}" wx:key="*this">
-        <text class="chapter-text">{{item}}</text>
-        <image class="edit-icon" src="/images/icons/edit_pen.png"></image>
+      <view class="chapter-box">
+        <view
+          class="chapter-item"
+          wx:for="{{categories[activeCategory].chapters}}"
+          wx:key="*this"
+          bindtap="startQuiz"
+          data-title="{{item}}"
+        >
+          <text class="chapter-title">{{item}}</text>
+          <view class="go-btn">GO</view>
+        </view>
+      </view>
+
+      <view class="empty-state" wx:if="{{categories[activeCategory].chapters.length === 0}}">
+        <text>暂无内容，敬请期待</text>
       </view>
     </view>
   </scroll-view>

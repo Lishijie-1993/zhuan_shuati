@@ -1,18 +1,18 @@
-/* miniprogram/pages/category/index.wxss */
-
+/* 确保页面高度占满全屏 */
 page {
   background-color: #ffffff;
   height: 100%;
   overflow: hidden;
 }
 
+/* 主容器：使用 Flex 布局让左右并排 */
 .container {
   display: flex;
   height: 100vh;
   width: 100%;
 }
 
-/* 左侧导航区域 */
+/* 左侧栏 */
 .nav-left {
   width: 220rpx;
   background-color: #f7f7f7;
@@ -28,10 +28,9 @@ page {
   color: #666666;
   padding: 0 20rpx;
   text-align: center;
-  transition: all 0.2s ease;
 }
 
-/* 激活状态：白色背景 + 蓝色左边框 + 蓝色文字 */
+/* 激活态样式：左侧蓝色边框 */
 .nav-item.active {
   background-color: #ffffff;
   color: #2D5CF6;
@@ -39,18 +38,19 @@ page {
   border-left: 8rpx solid #2D5CF6;
 }
 
-/* 右侧内容区域 */
+/* 右侧内容区 */
 .nav-right {
   flex: 1;
   height: 100%;
   background-color: #ffffff;
 }
 
+/* 内部间距包裹 */
 .content-wrapper {
   padding: 0 30rpx 40rpx;
 }
 
-/* 右侧标题区：对齐截图中的圆点样式 */
+/* 标题区域 */
 .category-header {
   display: flex;
   align-items: center;
@@ -72,7 +72,7 @@ page {
   color: #333333;
 }
 
-/* 章节列表项 */
+/* 章节项布局：标题在左，GO按钮在右 */
 .chapter-item {
   display: flex;
   justify-content: space-between;
@@ -89,7 +89,7 @@ page {
   line-height: 1.5;
 }
 
-/* GO 按钮：对齐截图中的淡蓝色圆角样式 */
+/* GO 按钮样式 */
 .go-btn {
   width: 84rpx;
   height: 46rpx;
@@ -100,10 +100,9 @@ page {
   border-radius: 23rpx;
   font-size: 22rpx;
   font-weight: bold;
-  flex-shrink: 0; /* 防止标题过长时按钮被挤压 */
+  flex-shrink: 0;
 }
 
-/* 空状态样式 */
 .empty-state {
   display: flex;
   flex-direction: column;
