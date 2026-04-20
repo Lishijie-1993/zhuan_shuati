@@ -1,5 +1,5 @@
 {
-  "name": "auth.getUserInfo",
+  "name": "getUserInfo",
   "version": "1.0.0",
   "description": "获取用户信息",
   "main": "index.js",

@@ -37,7 +37,7 @@ exports.main = async (event, context) => {
           id: q._id,
           chapterTitle: q.chapter_id,
           questionText: q.content,
-          options: q.options || [],
+          options: formatOptions(q.options),
           correctAnswer: q.correct_answer,
           analysisText: q.analysis || '暂无解析',
           type: q.type
@@ -114,4 +114,42 @@ async function updateUserFavoritesCount(openid, delta) {
   } catch (err) {
     console.error('更新收藏数量失败:', err);
   }
+}
+
+// 统一格式化选项数据
+function formatOptions(options) {
+  if (!options) return [];
+
+  // 如果是字符串（JSON），尝试解析
+  if (typeof options === 'string') {
+    try {
+      options = JSON.parse(options);
+    } catch (e) {
+      // 如果解析失败，尝试按换行分割
+      return options.split('\n').filter(s => s.trim()).map((s, i) => ({
+        id: String.fromCharCode(65 + i),
+        text: s.trim()
+      }));
+    }
+  }
+
+  // 如果是数组
+  if (Array.isArray(options)) {
+    return options.map((opt, index) => {
+      // 如果是对象 {key: 'A', content: 'xxx'} 或 {id: 'A', text: 'xxx'}
+      if (typeof opt === 'object') {
+        return {
+          id: opt.key || opt.id || String.fromCharCode(65 + index),
+          text: opt.content || opt.value || opt.text || ''
+        };
+      }
+      // 如果是字符串
+      return {
+        id: String.fromCharCode(65 + index),
+        text: String(opt)
+      };
+    });
+  }
+
+  return [];
 }

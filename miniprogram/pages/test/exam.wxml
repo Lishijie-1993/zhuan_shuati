@@ -1,10 +1,5 @@
 <view class="container">
-  <view class="nav-bar">
-    <view class="back-btn" bindtap="goBack">
-      <text class="back-icon">〈</text>
-    </view>
-    <text class="page-title">模拟考试</text>
-  </view>
+  <!-- 使用系统导航栏，不重复添加返回按钮 -->
 
   <view class="status-bar">
     <view class="progress">
@@ -12,8 +7,8 @@
       <text class="total">/{{questions.length}}</text>
     </view>
     <view class="timer {{timeLeft < 300 ? 'danger' : ''}}">
-      <image class="icon-clock" src="/images/icons/clock.png"></image>
-      <text>{{timerText}}</text>
+      <image class="icon-clock" src="/images/icons/clock.png" mode="aspectFit"></image>
+      <text class="timer-text">{{timerText}}</text>
     </view>
   </view>
 
@@ -26,15 +21,15 @@
     <view class="q-title">{{questions[currentIndex].title}}</view>
 
     <view class="options-group">
-      <view 
-        wx:for="{{questions[currentIndex].options}}" 
-        wx:key="key" 
-        class="option-item {{helper.isSelected(userAnswers[questions[currentIndex].id], item.key) ? 'selected' : ''}}"
+      <view
+        wx:for="{{questions[currentIndex].options}}"
+        wx:key="id"
+        class="option-item {{helper.isSelected(userAnswers[questions[currentIndex].id], item.id) ? 'selected' : ''}}"
         bindtap="selectOption"
-        data-key="{{item.key}}"
+        data-key="{{item.id}}"
       >
-        <view class="option-label">{{item.key}}</view>
-        <view class="option-content">{{item.content}}</view>
+        <view class="option-label">{{item.id}}</view>
+        <view class="option-content">{{item.text}}</view>
       </view>
     </view>
   </view>
@@ -54,10 +49,11 @@
 
 <wxs module="helper">
   module.exports = {
-    isSelected: function(userAns, key) {
+    isSelected: function(userAns, id) {
       if (!userAns) return false;
-      if (typeof userAns === 'string') return userAns === key;
-      return userAns.indexOf(key) > -1;
+      if (typeof userAns === 'string') return userAns === id;
+      if (Array.isArray(userAns)) return userAns.indexOf(id) > -1;
+      return false;
     }
   }
 </wxs>

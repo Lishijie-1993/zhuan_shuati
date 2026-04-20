@@ -183,11 +183,50 @@ function formatQuestion(q) {
     id: q._id || q.id,
     subjectId: q.subject_id,
     chapterId: q.chapter_id,
-    type: q.type, // single/multi/judge
+    type: q.type,
     content: q.content,
-    options: q.options || [],
+    options: formatOptions(q.options),
     correctAnswer: q.correct_answer,
     analysis: q.analysis || '暂无解析',
     difficulty: q.difficulty || 1
   };
+}
+
+// 统一格式化选项数据
+function formatOptions(options) {
+  if (!options) return [];
+
+  // 如果是字符串（JSON），尝试解析
+  if (typeof options === 'string') {
+    try {
+      options = JSON.parse(options);
+    } catch (e) {
+      // 如果解析失败，尝试按换行分割
+      const lines = options.split('\n').filter(s => s.trim());
+      return lines.map((s, i) => ({
+        id: String.fromCharCode(65 + i),
+        text: s.trim()
+      }));
+    }
+  }
+
+  // 如果是数组
+  if (Array.isArray(options)) {
+    return options.map((opt, index) => {
+      // 如果是对象
+      if (typeof opt === 'object') {
+        return {
+          id: opt.id || opt.key || String.fromCharCode(65 + index),
+          text: opt.text || opt.content || opt.value || ''
+        };
+      }
+      // 如果是字符串
+      return {
+        id: String.fromCharCode(65 + index),
+        text: String(opt)
+      };
+    });
+  }
+
+  return [];
 }

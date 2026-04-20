@@ -1,39 +1,13 @@
 page {
-  background-color: #ffffff;
+  background-color: #f7f8fa;
   height: 100vh;
 }
 
 .container {
   display: flex;
   flex-direction: column;
-}
-
-/* 顶部区域 */
-.error-header {
-  background: linear-gradient(180deg, #2D5CF6 0%, #4A7FFF 100%); 
+  min-height: 100vh;
   padding-top: env(safe-area-inset-top);
-  padding-bottom: 60rpx;
-  color: #fff;
-}
-
-.nav-bar {
-  height: 88rpx;
-  display: flex;
-  align-items: center;
-  padding: 0 30rpx;
-  position: relative;
-}
-
-.back-icon {
-  font-size: 40rpx;
-  font-weight: bold;
-}
-
-.page-title {
-  flex: 1;
-  text-align: center;
-  font-size: 34rpx;
-  margin-right: 40rpx; /* 抵消左侧返回键宽度，使文字居中 */
 }
 
 /* 仪表盘统计 */
@@ -41,30 +15,32 @@ page {
   display: flex;
   justify-content: center;
   padding: 40rpx 0;
+  background: linear-gradient(180deg, #2D5CF6 0%, #4A7FFF 100%);
 }
 
 .stat-circle {
   width: 320rpx;
   height: 320rpx;
-  border: 4rpx border: 2rpx solid rgba(255, 255, 255, 0.3);
+  border: 4rpx solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   position: relative;
-  /* 模拟图片中的刻度感 */
   box-shadow: 0 0 0 10rpx rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .stat-num {
   font-size: 80rpx;
   font-weight: bold;
+  color: #fff;
 }
 
 .stat-label {
   font-size: 28rpx;
-  opacity: 0.9;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 /* 选项卡按钮 */
@@ -73,6 +49,7 @@ page {
   justify-content: space-around;
   padding: 0 40rpx;
   margin-top: 30rpx;
+  background: linear-gradient(180deg, #2D5CF6 0%, #4A7FFF 100%);
 }
 
 .tab-btn {
@@ -83,6 +60,7 @@ page {
   border-radius: 40rpx;
   background: rgba(255, 255, 255, 0.2);
   font-size: 28rpx;
+  color: #fff;
 }
 
 .tab-btn.active {
@@ -93,7 +71,9 @@ page {
 
 /* 内容区域 */
 .content-section {
+  flex: 1;
   padding: 40rpx 30rpx;
+  background-color: #f7f8fa;
 }
 
 .section-title {
@@ -102,13 +82,53 @@ page {
   color: #333;
 }
 
+.error-item {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+}
+
+.error-q-type {
+  margin-bottom: 10rpx;
+}
+
+.type-tag {
+  background: #EEF3FF;
+  color: #2D5CF6;
+  font-size: 22rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 6rpx;
+}
+
+.error-q-content {
+  font-size: 30rpx;
+  color: #333;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.error-q-info {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10rpx;
+}
+
+.arrow {
+  color: #999;
+  font-size: 28rpx;
+}
+
 /* 空状态 */
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding-top: 150rpx; 
+  padding-top: 150rpx;
 }
 
 .empty-icon {
@@ -121,4 +141,20 @@ page {
 .empty-text {
   color: #999;
   font-size: 28rpx;
+}
+
+/* 底部按钮 */
+.action-bar {
+  padding: 20rpx 30rpx calc(20rpx + env(safe-area-inset-bottom));
+  background: #fff;
+}
+
+.btn-retry {
+  width: 100%;
+  height: 88rpx;
+  line-height: 88rpx;
+  background: #2D5CF6;
+  color: #fff;
+  border-radius: 44rpx;
+  font-size: 32rpx;
 }

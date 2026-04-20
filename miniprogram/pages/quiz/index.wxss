@@ -6,36 +6,11 @@ page {
   flex-direction: column;
 }
 
-/* 顶部导航 */
-.header {
-  background-color: #2D5CF6;
-  color: #fff;
-  padding-bottom: 20rpx;
-}
-
-.status-bar {
-  height: env(safe-area-inset-top);
-}
-
-.nav-bar {
-  height: 44px;
-  display: flex;
-  align-items: center;
-  padding: 0 30rpx;
-}
-
-.back-icon {
-  font-size: 44rpx;
-  font-weight: bold;
-  color: #fff;
-  padding: 10rpx;
-}
-
-.chapter-name {
+.container {
   flex: 1;
-  font-size: 32rpx;
-  text-align: center;
-  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding-top: env(safe-area-inset-top);
 }
 
 /* 模式切换 */
@@ -45,6 +20,8 @@ page {
   justify-content: center;
   align-items: center;
   position: relative;
+  background-color: #fff;
+  border-bottom: 1rpx solid #f2f2f2;
 }
 
 .switch-container {

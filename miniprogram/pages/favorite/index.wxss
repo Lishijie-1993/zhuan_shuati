@@ -1,61 +1,73 @@
-/** pages/favorite/index.wxss **/
 page {
-  background-color: #ffffff;
+  background-color: #f7f8fa;
+  height: 100vh;
+}
+
+.container {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  overflow: hidden; 
 }
 
-/* 【修改点3】顶部安全适配：使用 flex 布局且动态计算 padding */
-.header {
-  background-color: #2D5CF6;
-  color: #fff;
-  padding-top: calc(env(safe-area-inset-top) + 10rpx); 
-  padding-bottom: 20rpx;
+/* 顶部导航栏 */
+.nav-bar {
   display: flex;
   align-items: center;
-  position: relative;
-  height: 88rpx; 
+  height: 88rpx;
+  padding: 0 30rpx;
+  background-color: #fff;
+  border-bottom: 1rpx solid #f2f2f2;
+  flex-shrink: 0;
 }
 
-.back-icon {
-  font-size: 44rpx;
-  position: absolute;
-  left: 30rpx;
-  z-index: 10;
-  width: 80rpx;
+.nav-left {
+  width: 60rpx;
   height: 88rpx;
   display: flex;
   align-items: center;
+  justify-content: flex-start;
 }
 
-.chapter-name {
-  font-size: 34rpx;
+.nav-back-icon {
+  font-size: 48rpx;
+  color: #333;
+  font-weight: bold;
+}
+
+.nav-title {
   flex: 1;
   text-align: center;
-  font-weight: 500;
+  font-size: 34rpx;
+  font-weight: bold;
+  color: #333;
 }
 
+.nav-placeholder {
+  width: 60rpx;
+}
+
+/* 模式切换 */
 .mode-switch {
   padding: 20rpx 30rpx;
   display: flex;
   justify-content: center;
   align-items: center;
   position: relative;
+  background-color: #fff;
   border-bottom: 1rpx solid #f2f2f2;
+  flex-shrink: 0;
 }
 
 .switch-container {
   display: flex;
   border: 2rpx solid #2D5CF6;
-  border-radius: 40rpx; 
+  border-radius: 10rpx;
   overflow: hidden;
 }
 
 .mode-item {
   padding: 10rpx 40rpx;
-  font-size: 26rpx;
+  font-size: 28rpx;
   color: #2D5CF6;
 }
 
@@ -64,62 +76,185 @@ page {
   color: #fff;
 }
 
-/* 【修改点3/5】高度适配：使用 flex:1 且 height:0 确保正确撑开 */
-.quiz-swiper {
+.auto-next {
+  position: absolute;
+  right: 30rpx;
+  color: #2D5CF6;
+  font-size: 28rpx;
+  padding: 10rpx;
+}
+
+/* 加载状态 */
+.loading-state {
   flex: 1;
-  width: 100%;
-  height: 0; 
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 28rpx;
 }
 
-.quiz-content {
-  height: 100%;
-  /* 为底部导航留出足够空间，避免遮挡最后一段文字 */
-  padding: 40rpx 40rpx 180rpx; 
-  box-sizing: border-box;
+/* 空状态 */
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 28rpx;
 }
 
-/* 【修改点5】文本防截断处理 */
+.empty-icon {
+  width: 200rpx;
+  height: 200rpx;
+  margin-bottom: 30rpx;
+  opacity: 0.5;
+}
+
+.debug-info {
+  margin-top: 20rpx;
+  padding: 20rpx;
+  background: #f5f5f5;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+  color: #666;
+  max-width: 90%;
+  word-break: break-all;
+  text-align: left;
+}
+
+/* 题目容器 */
+.quiz-container {
+  flex: 1;
+  background-color: #f7f8fa;
+}
+
+.question-card {
+  padding: 30rpx;
+  padding-bottom: 200rpx;
+}
+
+.question-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30rpx;
+}
+
+.q-number {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.q-type-tag {
+  background-color: #5d8aff;
+  color: #fff;
+  font-size: 22rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+  margin-left: 15rpx;
+}
+
 .question-text {
   font-size: 34rpx;
   line-height: 1.6;
   color: #333;
-  margin-bottom: 60rpx;
-  text-align: justify;
+  margin-bottom: 40rpx;
   word-break: break-all;
-  white-space: pre-wrap;
+  background-color: #fff;
+  padding: 30rpx;
+  border-radius: 16rpx;
+}
+
+/* 选项列表 */
+.options-list {
+  margin-bottom: 40rpx;
 }
 
 .option-item {
-  background-color: #f6f7f9;
+  background-color: #fff;
   padding: 30rpx;
   border-radius: 12rpx;
   margin-bottom: 24rpx;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border: 2rpx solid transparent;
+  border: 2rpx solid #eee;
+}
+
+.option-item:active {
+  background-color: #f5f5f5;
+}
+
+.option-item.active-correct {
+  background-color: #e8f5e9;
+  border-color: #4caf50;
+}
+
+.option-item.active-error {
+  background-color: #ffebee;
+  border-color: #f44336;
 }
 
 .option-label {
   flex: 1;
-  margin-right: 20rpx;
   font-size: 30rpx;
+  color: #333;
   word-break: break-all;
 }
 
-/* 【修改点4】底部导航栏：添加足够的 padding-bottom 和安全区适配 */
+/* 解析框 */
+.analysis-box {
+  margin-top: 30rpx;
+  padding: 30rpx;
+  background-color: #fff;
+  border-radius: 12rpx;
+}
+
+.analysis-header {
+  margin-bottom: 20rpx;
+}
+
+.analysis-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  border-left: 8rpx solid #2D5CF6;
+  padding-left: 20rpx;
+}
+
+.correct-answer-row {
+  font-size: 30rpx;
+  color: #444;
+  margin-bottom: 15rpx;
+}
+
+.blue-text {
+  color: #2D5CF6;
+  font-weight: bold;
+}
+
+.analysis-detail {
+  font-size: 28rpx;
+  color: #666;
+  line-height: 1.6;
+}
+
+/* 底部导航 */
 .footer-actions {
-  height: 110rpx;
+  height: 120rpx;
   border-top: 1rpx solid #eee;
   display: flex;
   justify-content: space-around;
   align-items: center;
-  /* 基础内边距 + 底部安全区高度 */
-  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
   background-color: #fff;
   position: fixed;
   bottom: 0;
-  width: 100%;
+  left: 0;
+  right: 0;
   z-index: 100;
 }
 
@@ -132,6 +267,10 @@ page {
   flex: 1;
 }
 
+.action-item.disabled {
+  color: #ccc;
+}
+
 .action-icon {
   width: 44rpx;
   height: 44rpx;
@@ -142,22 +281,4 @@ page {
   font-size: 28rpx;
   font-weight: 500;
   color: #2D5CF6;
-}
-/* 空状态居中显示 */
-.empty-state {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: #999;
-  font-size: 28rpx;
-  height: 60vh; /* 给它一个足够的高度，确保它能撑开页面 */
-}
-
-.empty-icon {
-  width: 200rpx;
-  height: 200rpx;
-  margin-bottom: 30rpx;
-  opacity: 0.5;
 }

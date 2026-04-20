@@ -1,5 +1,5 @@
 {
-  "name": "quiz.listPapers",
+  "name": "listPapers",
   "version": "1.0.0",
   "description": "获取试卷列表",
   "main": "index.js",

@@ -1,5 +1,5 @@
 {
-  "name": "quiz.getQuestions",
+  "name": "getQuestions",
   "version": "1.0.0",
   "description": "获取题目列表",
   "main": "index.js",

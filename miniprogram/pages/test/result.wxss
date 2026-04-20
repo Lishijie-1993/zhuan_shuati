@@ -1,8 +1,56 @@
+page {
+  background-color: #f7f8fa;
+  height: 100vh;
+}
+
 .container {
   min-height: 100vh;
-  background: linear-gradient(180deg, #4A90E2 0%, #F7F8FA 40%);
-  padding: 60rpx 30rpx;
-  box-sizing: border-box;
+  background-color: #f7f8fa;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 顶部导航栏 */
+.nav-bar {
+  display: flex;
+  align-items: center;
+  height: 88rpx;
+  padding: 0 30rpx;
+  background-color: #fff;
+  border-bottom: 1rpx solid #f2f2f2;
+  flex-shrink: 0;
+}
+
+.nav-left {
+  width: 60rpx;
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.nav-back-icon {
+  font-size: 48rpx;
+  color: #333;
+  font-weight: bold;
+}
+
+.nav-title {
+  flex: 1;
+  text-align: center;
+  font-size: 34rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.nav-placeholder {
+  width: 60rpx;
+}
+
+/* 内容区域 */
+.content-area {
+  flex: 1;
+  padding: 30rpx;
 }
 
 .result-card {
@@ -10,7 +58,7 @@
   border-radius: 24rpx;
   padding: 60rpx 40rpx;
   box-shadow: 0 8rpx 30rpx rgba(0,0,0,0.08);
-  margin-bottom: 60rpx;
+  margin-bottom: 40rpx;
 }
 
 .result-header {
@@ -119,10 +167,4 @@
 .btn-action.secondary {
   background: #f8f8f8;
   color: #666;
-}
-
-.btn-action.outline {
-  background: transparent;
-  border: 2rpx solid #2D5CF6;
-  color: #2D5CF6;
 }

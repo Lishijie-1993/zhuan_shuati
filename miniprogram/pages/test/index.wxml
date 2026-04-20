@@ -1,19 +1,12 @@
 <view class="container">
-  <view class="test-header">
-    <view class="nav-bar">
-      <view class="back-btn" bindtap="goBack">
-        <text class="back-icon">〈</text>
-      </view>
-      <text class="page-title">模拟考试</text>
-    </view>
+  <!-- 使用系统导航栏，不添加自定义导航栏 -->
 
-    <view class="header-content">
-      <view class="title-section">
-        <text class="title-main">试卷列表</text>
-        <text class="title-sub">共 {{paperList.length}} 套模拟试卷</text>
-      </view>
-      <view class="header-bg-icon">📝</view>
+  <view class="header-content">
+    <view class="title-section">
+      <text class="title-main">试卷列表</text>
+      <text class="title-sub">共 {{paperList.length}} 套模拟试卷</text>
     </view>
+    <view class="header-bg-icon">📝</view>
   </view>
 
   <view class="content-section">

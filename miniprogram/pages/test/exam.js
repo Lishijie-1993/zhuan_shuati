@@ -15,15 +15,32 @@ Page({
   },
 
   onLoad(options) {
-    const { id, title } = options;
+    console.log('[exam] onLoad options:', options);
+
+    // 解析传入的参数
+    let paperId = options.id || options.paperId;
+    let paperTitle = options.title || '模拟考试';
+
+    // 如果标题是编码的，进行解码
+    if (paperTitle && paperTitle !== '模拟考试') {
+      try {
+        paperTitle = decodeURIComponent(paperTitle);
+      } catch (e) {
+        console.log('[exam] 标题解码失败，使用原始值:', paperTitle);
+      }
+    }
+
+    console.log('[exam] 解析后的 paperId:', paperId, 'paperTitle:', paperTitle);
+
     this.setData({
-      paperId: id,
-      paperTitle: title || '模拟考试'
+      paperId: paperId,
+      paperTitle: paperTitle
     });
-    this.loadQuestions(id);
+
+    this.loadQuestions(paperId);
     this.startTimer();
 
-    wx.setNavigationBarTitle({ title: this.data.paperTitle });
+    wx.setNavigationBarTitle({ title: paperTitle });
 
     wx.enableAlertBeforeUnload({
       message: "考试正在进行中，退出将不保存进度，确定退出吗？"
@@ -78,13 +95,13 @@ Page({
   loadMockData() {
     const mockQuestions = [
       { id: '101', type: 'single', title: '根据《水利工程建设安全生产管理规定》，施工单位应当设立安全生产管理机构，配备（ ）安全生产管理人员。', options: [
-        { key: 'A', content: '专职' }, { key: 'B', content: '兼职' }, { key: 'C', content: '临时' }, { key: 'D', content: '派驻' }
+        { id: 'A', text: '专职' }, { id: 'B', text: '兼职' }, { id: 'C', text: '临时' }, { id: 'D', text: '派驻' }
       ], answer: 'A' },
       { id: '102', type: 'multiple', title: '以下属于特种作业人员的有（ ）。', options: [
-        { key: 'A', content: '电工' }, { key: 'B', content: '焊工' }, { key: 'C', content: '起重信号工' }, { key: 'D', content: '普通力工' }
+        { id: 'A', text: '电工' }, { id: 'B', text: '焊工' }, { id: 'C', text: '起重信号工' }, { id: 'D', text: '普通力工' }
       ], answer: ['A', 'B', 'C'] },
       { id: '103', type: 'judge', title: '安全生产责任制是施工单位安全管理的核心。', options: [
-        { key: 'A', content: '正确' }, { key: 'B', content: '错误' }
+        { id: 'A', text: '正确' }, { id: 'B', text: '错误' }
       ], answer: 'A' }
     ];
     this.setData({ questions: mockQuestions, loading: false });

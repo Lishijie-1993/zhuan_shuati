@@ -1,5 +1,5 @@
 {
-  "name": "quiz.syncProgress",
+  "name": "syncProgress",
   "version": "1.0.0",
   "description": "同步刷题进度",
   "main": "index.js",

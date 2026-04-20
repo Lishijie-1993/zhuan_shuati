@@ -4,6 +4,7 @@ Page({
     score: 0,
     correctCount: 0,
     totalCount: 0,
+    accuracy: 0,
     paperTitle: '模拟考试',
     passed: false
   },
@@ -11,17 +12,23 @@ Page({
   onLoad(options) {
     const { score, correct, total, paperId } = options;
 
+    const scoreNum = parseInt(score) || 0;
+    const correctNum = parseInt(correct) || 0;
+    const totalNum = parseInt(total) || 0;
+    const accuracyNum = totalNum > 0 ? Math.round((correctNum / totalNum) * 100) : 0;
+
     this.setData({
-      score: parseInt(score) || 0,
-      correctCount: parseInt(correct) || 0,
-      totalCount: parseInt(total) || 0,
-      passed: parseInt(score) >= 60
+      score: scoreNum,
+      correctCount: correctNum,
+      totalCount: totalNum,
+      accuracy: accuracyNum,
+      passed: scoreNum >= 60
     });
   },
 
   goHome() {
-    wx.redirectTo({
-      url: '/pages/test/index'
+    wx.switchTab({
+      url: '/pages/index/index'
     });
   },
 

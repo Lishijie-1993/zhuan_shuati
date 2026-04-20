@@ -1,35 +1,45 @@
 <view class="container">
-  <view class="result-card">
-    <view class="result-header">
-      <text class="result-label">考试完成</text>
-      <view class="score-circle {{score >= 60 ? 'pass' : 'fail'}}">
-        <text class="score-num">{{score}}</text>
-        <text class="score-unit">分</text>
-      </view>
-      <view class="pass-status {{passed ? 'pass' : 'fail'}}">
-        <text>{{passed ? '恭喜及格' : '未及格'}}</text>
-      </view>
+  <!-- 顶部导航栏 -->
+  <view class="nav-bar">
+    <view class="nav-left" bindtap="goHome">
+      <text class="nav-back-icon">〈</text>
     </view>
-
-    <view class="result-detail">
-      <view class="detail-item">
-        <text class="detail-label">正确题数</text>
-        <text class="detail-value correct">{{correctCount}} 题</text>
-      </view>
-      <view class="detail-item">
-        <text class="detail-label">总题数</text>
-        <text class="detail-value">{{totalCount}} 题</text>
-      </view>
-      <view class="detail-item">
-        <text class="detail-label">正确率</text>
-        <text class="detail-value">{{totalCount > 0 ? Math.round(correctCount / totalCount * 100) : 0}}%</text>
-      </view>
-    </view>
+    <text class="nav-title">考试结果</text>
+    <view class="nav-placeholder"></view>
   </view>
 
-  <view class="actions">
-    <button class="btn-action secondary" bindtap="viewAnalysis">查看解析</button>
-    <button class="btn-action" bindtap="doAgain">再做一次</button>
-    <button class="btn-action outline" bindtap="goHome">返回试卷列表</button>
+  <view class="content-area">
+    <view class="result-card">
+      <view class="result-header">
+        <text class="result-label">考试完成</text>
+        <view class="score-circle {{score >= 60 ? 'pass' : 'fail'}}">
+          <text class="score-num">{{score}}</text>
+          <text class="score-unit">分</text>
+        </view>
+        <view class="pass-status {{passed ? 'pass' : 'fail'}}">
+          <text>{{passed ? '恭喜及格' : '未及格'}}</text>
+        </view>
+      </view>
+
+      <view class="result-detail">
+        <view class="detail-item">
+          <text class="detail-label">正确题数</text>
+          <text class="detail-value correct">{{correctCount}} 题</text>
+        </view>
+        <view class="detail-item">
+          <text class="detail-label">总题数</text>
+          <text class="detail-value">{{totalCount}} 题</text>
+        </view>
+        <view class="detail-item">
+          <text class="detail-label">正确率</text>
+          <text class="detail-value">{{accuracy}}%</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="actions">
+      <button class="btn-action secondary" bindtap="viewAnalysis">查看解析</button>
+      <button class="btn-action" bindtap="doAgain">再做一次</button>
+    </view>
   </view>
 </view>

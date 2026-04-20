@@ -1,12 +1,5 @@
 <view class="container">
-  <view class="header">
-    <view class="status-bar"></view>
-    <view class="nav-bar">
-      <view class="back-icon" bindtap="goBack">〈</view>
-      <text class="chapter-name">{{chapterTitle}}</text>
-      <view style="width: 60rpx;"></view>
-    </view>
-  </view>
+  <!-- 使用系统导航栏 -->
 
   <view class="mode-switch">
     <view class="switch-container">

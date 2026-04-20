@@ -1,5 +1,5 @@
 {
-  "name": "rank.getLeaderboard",
+  "name": "getLeaderboard",
   "version": "1.0.0",
   "description": "获取排行榜",
   "main": "index.js",

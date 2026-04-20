@@ -1,7 +1,11 @@
 <view class="container">
-  <view class="header">
-    <view class="back-icon" bindtap="goBack">〈</view>
-    <text class="chapter-name">我的收藏</text>
+  <!-- 顶部导航栏 -->
+  <view class="nav-bar">
+    <view class="nav-left" bindtap="goBack">
+      <text class="nav-back-icon">〈</text>
+    </view>
+    <text class="nav-title">我的收藏</text>
+    <view class="nav-placeholder"></view>
   </view>
 
   <view class="mode-switch" wx:if="{{!loading && favorites.length > 0}}">
@@ -19,50 +23,50 @@
   <view wx:elif="{{favorites.length === 0}}" class="empty-state">
     <image src="/images/icons/favorite2.png" class="empty-icon"></image>
     <text>收藏夹中暂无题目</text>
+    <view class="debug-info" wx:if="{{debugInfo}}">
+      <text>{{debugInfo}}</text>
+    </view>
   </view>
 
-  <swiper wx:else class="quiz-swiper" current="{{currentIndex}}" bindchange="onSwiperChange">
-    <swiper-item wx:for="{{favorites}}" wx:key="id" wx:for-index="qIndex">
-      <scroll-view scroll-y class="quiz-content">
-        <view class="question-info">
-          <text class="q-number">第{{qIndex + 1}}题</text>
-          <view class="q-type-tag">{{item.type === 'single' ? '单选题' : (item.type === 'multiple' ? '多选题' : '判断题')}}</view>
-        </view>
+  <!-- 直接渲染当前题目 -->
+  <scroll-view scroll-y class="quiz-container" wx:else>
+    <view class="question-card">
+      <view class="question-info">
+        <text class="q-number">第{{currentIndex + 1}}题</text>
+        <view class="q-type-tag">{{favorites[currentIndex].type === 'single' ? '单选题' : (favorites[currentIndex].type === 'multiple' ? '多选题' : '判断题')}}</view>
+      </view>
 
-        <view class="question-text">{{item.questionText}}</view>
+      <view class="question-text">{{favorites[currentIndex].questionText}}</view>
 
-        <view class="options-list">
-          <view 
-            class="option-item {{ (mode === 'recite' && opt.id === item.correctAnswer) || (mode === 'answer' && userAnswers[item.id] && opt.id === item.correctAnswer) ? 'active-correct' : '' }} {{ mode === 'answer' && userAnswers[item.id] && opt.id !== item.correctAnswer && userAnswers[item.id] === opt.id ? 'active-error' : '' }}" 
-            wx:for="{{item.options}}" 
-            wx:for-item="opt"
-            wx:key="id"
-            bindtap="selectOption"
-            data-opt-id="{{opt.id}}"
-            data-q-id="{{item.id}}"
-            data-index="{{qIndex}}"
-          >
-            <text class="option-label">{{opt.id}}. {{opt.text}}</text>
-            <icon wx:if="{{ (mode === 'recite' && opt.id === item.correctAnswer) || (mode === 'answer' && userAnswers[item.id] && opt.id === item.correctAnswer) }}" type="success" size="18" color="#07C160"></icon>
-            <icon wx:if="{{ mode === 'answer' && userAnswers[item.id] && opt.id !== item.correctAnswer && userAnswers[item.id] === opt.id }}" type="warn" size="18" color="#FA5151"></icon>
-          </view>
+      <view class="options-list">
+        <view
+          wx:for="{{favorites[currentIndex].options}}"
+          wx:key="id"
+          class="option-item {{(mode === 'recite' && item.id === favorites[currentIndex].correctAnswer) || (mode === 'answer' && userAnswers[favorites[currentIndex].id] && item.id === favorites[currentIndex].correctAnswer) ? 'active-correct' : ''}} {{mode === 'answer' && userAnswers[favorites[currentIndex].id] && item.id !== favorites[currentIndex].correctAnswer && userAnswers[favorites[currentIndex].id] === item.id ? 'active-error' : ''}}"
+          bindtap="selectOption"
+          data-opt-id="{{item.id}}"
+          data-q-id="{{favorites[currentIndex].id}}"
+        >
+          <text class="option-label">{{item.id}}. {{item.text}}</text>
+          <icon wx:if="{{(mode === 'recite' && item.id === favorites[currentIndex].correctAnswer) || (mode === 'answer' && userAnswers[favorites[currentIndex].id] && item.id === favorites[currentIndex].correctAnswer)}}" type="success" size="18" color="#07C160"></icon>
+          <icon wx:if="{{mode === 'answer' && userAnswers[favorites[currentIndex].id] && item.id !== favorites[currentIndex].correctAnswer && userAnswers[favorites[currentIndex].id] === item.id}}" type="warn" size="18" color="#FA5151"></icon>
         </view>
+      </view>
 
-        <view class="analysis-box" wx:if="{{mode === 'recite' || userAnswers[item.id] || showAnalysisMap[item.id]}}">
-          <view class="analysis-header">
-            <text class="analysis-title">试题解析</text>
-          </view>
-          <view class="analysis-body">
-            <view class="correct-answer-row">正确答案：<text class="blue-text">{{item.correctAnswer}}</text></view>
-            <text class="analysis-detail">{{item.analysisText}}</text>
-          </view>
+      <view class="analysis-box" wx:if="{{mode === 'recite' || userAnswers[favorites[currentIndex].id]}}">
+        <view class="analysis-header">
+          <text class="analysis-title">试题解析</text>
         </view>
-      </scroll-view>
-    </swiper-item>
-  </swiper>
+        <view class="analysis-body">
+          <view class="correct-answer-row">正确答案：<text class="blue-text">{{favorites[currentIndex].correctAnswer}}</text></view>
+          <text class="analysis-detail">{{favorites[currentIndex].analysisText}}</text>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
 
   <view class="footer-actions" wx:if="{{favorites.length > 0}}">
-    <view class="action-item" bindtap="prevQuestion">
+    <view class="action-item {{currentIndex === 0 ? 'disabled' : ''}}" bindtap="prevQuestion">
       <image src="/images/icons/back.png" class="action-icon"></image>
       <text>上一题</text>
     </view>
@@ -77,7 +81,7 @@
       <image src="/images/icons/favorite.png" class="action-icon"></image>
       <text style="color: #ff9800;">已收藏</text>
     </view>
-    <view class="action-item" bindtap="nextQuestion">
+    <view class="action-item {{currentIndex >= favorites.length - 1 ? 'disabled' : ''}}" bindtap="nextQuestion">
       <image src="/images/icons/next.png" class="action-icon"></image>
       <text>下一题</text>
     </view>

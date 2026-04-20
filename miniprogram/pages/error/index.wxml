@@ -1,23 +1,16 @@
 <view class="container">
-  <view class="error-header">
-    <view class="nav-bar">
-      <view class="back-btn" bindtap="goBack">
-        <text class="back-icon">〈</text>
-      </view>
-      <text class="page-title">我的错题</text>
-    </view>
+  <!-- 使用系统导航栏，不添加自定义导航栏 -->
 
-    <view class="stat-circle-wrapper">
-      <view class="stat-circle">
-        <view class="stat-num">{{errorCount}}</view>
-        <view class="stat-label">我的错题</view>
-      </view>
+  <view class="stat-circle-wrapper">
+    <view class="stat-circle">
+      <view class="stat-num">{{errorCount}}</view>
+      <view class="stat-label">我的错题</view>
     </view>
+  </view>
 
-    <view class="tab-container">
-      <view class="tab-btn {{activeTab === 'today' ? 'active' : ''}}" bindtap="switchTab" data-tab="today">今日错题</view>
-      <view class="tab-btn {{activeTab === 'all' ? 'active' : ''}}" bindtap="switchTab" data-tab="all">全部错题</view>
-    </view>
+  <view class="tab-container">
+    <view class="tab-btn {{activeTab === 'today' ? 'active' : ''}}" bindtap="switchTab" data-tab="today">今日错题</view>
+    <view class="tab-btn {{activeTab === 'all' ? 'active' : ''}}" bindtap="switchTab" data-tab="all">全部错题</view>
   </view>
 
   <view class="content-section">

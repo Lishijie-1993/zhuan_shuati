@@ -2,44 +2,12 @@
   background-color: #f7f8fa;
   min-height: 100vh;
   padding: 0;
-}
-
-.test-header {
-  background: linear-gradient(135deg, #4A90E2 0%, #6AAEFF 100%);
-  padding: 40rpx 30rpx 50rpx;
-  border-radius: 0 0 40rpx 40rpx;
-}
-
-.nav-bar {
-  display: flex;
-  align-items: center;
-  margin-bottom: 40rpx;
-}
-
-.back-btn {
-  width: 64rpx;
-  height: 64rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.back-icon {
-  font-size: 48rpx;
-  color: #fff;
-  font-weight: bold;
-}
-
-.page-title {
-  flex: 1;
-  text-align: center;
-  font-size: 36rpx;
-  font-weight: bold;
-  color: #fff;
-  margin-right: 64rpx;
+  padding-top: env(safe-area-inset-top);
 }
 
 .header-content {
+  background: linear-gradient(135deg, #4A90E2 0%, #6AAEFF 100%);
+  padding: 40rpx 30rpx 50rpx;
   display: flex;
   justify-content: space-between;
   align-items: center;

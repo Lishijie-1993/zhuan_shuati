@@ -67,10 +67,7 @@ exports.main = async (event, context) => {
           id: q._id,
           type: q.type === 'single' ? 'single' : (q.type === 'multiple' ? 'multiple' : 'judge'),
           title: q.content,
-          options: (q.options || []).map(opt => ({
-            key: opt.key,
-            content: opt.value || opt.content || ''
-          })),
+          options: formatOptions(q.options),
           answer: q.correct_answer,
           analysis: q.analysis || ''
         }));
@@ -92,3 +89,42 @@ exports.main = async (event, context) => {
     };
   }
 };
+
+// 统一格式化选项数据
+function formatOptions(options) {
+  if (!options) return [];
+
+  // 如果是字符串（JSON），尝试解析
+  if (typeof options === 'string') {
+    try {
+      options = JSON.parse(options);
+    } catch (e) {
+      // 如果解析失败，尝试按换行分割
+      const lines = options.split('\n').filter(s => s.trim());
+      return lines.map((s, i) => ({
+        id: String.fromCharCode(65 + i),
+        text: s.trim()
+      }));
+    }
+  }
+
+  // 如果是数组
+  if (Array.isArray(options)) {
+    return options.map((opt, index) => {
+      // 如果是对象
+      if (typeof opt === 'object') {
+        return {
+          id: opt.id || opt.key || String.fromCharCode(65 + index),
+          text: opt.text || opt.content || opt.value || ''
+        };
+      }
+      // 如果是字符串
+      return {
+        id: String.fromCharCode(65 + index),
+        text: String(opt)
+      };
+    });
+  }
+
+  return [];
+}

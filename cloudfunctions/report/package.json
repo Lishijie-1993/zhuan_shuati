@@ -1,5 +1,5 @@
 {
-  "name": "error.report",
+  "name": "report",
   "version": "1.0.0",
   "description": "记录错题",
   "main": "index.js",
