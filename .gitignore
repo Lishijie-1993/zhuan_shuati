@@ -16,3 +16,5 @@ yarn-error.log*
 
 # 云开发本地调试产生的临时文件
 cloudfunctions/common/
+# 忽略环境配置文件
+miniprogram/envConfig.js

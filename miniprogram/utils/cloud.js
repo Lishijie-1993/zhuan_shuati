@@ -3,9 +3,7 @@
 // 使用说明：
 // 1. 需要在微信公众平台开通云开发
 // 2. 在 cloudfunctions 目录创建对应的云函数并上传
-// 3. 前端通过 this.cloud.xxx() 调用
-
-const cloud = require('./cloud-sdk.js');
+// 3. 前端通过 require 引入后调用
 
 class CloudService {
   constructor() {
