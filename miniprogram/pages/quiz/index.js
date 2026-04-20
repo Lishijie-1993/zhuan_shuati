@@ -11,6 +11,7 @@ Page({
     totalQuestions: 0,
     correctAnswer: '',
     userAnswer: null,
+    userAnswers: {},  // 支持多选题的答案存储
     isFavorited: false,
     analysisText: '',
     options: [],
@@ -64,7 +65,9 @@ Page({
           options: firstQ.options,
           correctAnswer: firstQ.correctAnswer,
           analysisText: firstQ.analysis,
-          currentIndex: 0
+          currentIndex: 0,
+          userAnswer: null,
+          userAnswers: {}
         });
 
         this.checkFavoriteStatus();
@@ -100,7 +103,9 @@ Page({
           options: firstQ.options,
           correctAnswer: firstQ.correctAnswer,
           analysisText: firstQ.analysis,
-          currentIndex: 0
+          currentIndex: 0,
+          userAnswer: null,
+          userAnswers: {}
         });
 
         this.checkFavoriteStatus();
@@ -140,21 +145,31 @@ Page({
       currentQuestionText: mockQuestions[0].content,
       options: mockQuestions[0].options,
       correctAnswer: mockQuestions[0].correctAnswer,
-      analysisText: mockQuestions[0].analysis
+      analysisText: mockQuestions[0].analysis,
+      userAnswer: null,
+      userAnswers: {}
     });
 
     this.checkFavoriteStatus();
   },
 
+  // 获取当前题目（带安全检查）
+  getCurrentQuestion() {
+    const { questions, currentIndex } = this.data;
+    if (!questions || questions.length === 0) return null;
+    if (currentIndex < 0 || currentIndex >= questions.length) return null;
+    return questions[currentIndex];
+  },
+
   // 检查收藏状态
   checkFavoriteStatus() {
     if (this.data.questions.length === 0) return;
-    
+
     try {
       const favorites = wx.getStorageSync(STORAGE_KEYS.FAVORITES) || [];
-      const currentQ = this.data.questions[this.data.currentIndex];
+      const currentQ = this.getCurrentQuestion();
       if (!currentQ) return;
-      
+
       const isFavorited = favorites.some(item => item.id === currentQ.id);
       this.setData({ isFavorited });
     } catch (e) {
@@ -172,20 +187,67 @@ Page({
 
   switchMode(e) {
     const mode = e.currentTarget.dataset.mode;
-    this.setData({ 
+    this.setData({
       mode,
-      userAnswer: null
+      userAnswer: null,
+      userAnswers: {}
     });
   },
 
+  // 选择选项（支持多选题）
   selectOption(e) {
+    const currentQ = this.getCurrentQuestion();
+    if (!currentQ) return;
+
+    const selectedId = e.currentTarget.dataset.id;
+
+    // 判断是否是多选题
+    const isMultipleChoice = currentQ.type === 'multiple';
+
+    if (isMultipleChoice) {
+      // 多选题处理
+      this.handleMultipleChoice(selectedId, currentQ);
+    } else {
+      // 单选题/判断题处理
+      this.handleSingleChoice(selectedId, currentQ);
+    }
+  },
+
+  // 处理多选题选择
+  handleMultipleChoice(selectedId, currentQ) {
+    // 背题模式下不处理
+    if (this.data.mode === 'recite') return;
+
+    const questionId = currentQ.id;
+    let userAnswers = { ...this.data.userAnswers };
+    let currentAns = userAnswers[questionId];
+
+    // 确保是数组
+    if (!Array.isArray(currentAns)) currentAns = [];
+
+    // 切换选中状态
+    const idx = currentAns.indexOf(selectedId);
+    if (idx > -1) {
+      // 取消选中
+      currentAns.splice(idx, 1);
+    } else {
+      // 选中
+      currentAns.push(selectedId);
+    }
+
+    // 排序保持一致
+    userAnswers[questionId] = currentAns.sort();
+
+    this.setData({ userAnswers });
+  },
+
+  // 处理单选题/判断题选择
+  handleSingleChoice(selectedId, currentQ) {
+    // 背题模式或已作答则忽略
     if (this.data.mode === 'recite' || this.data.userAnswer) {
       return;
     }
 
-    const selectedId = e.currentTarget.dataset.id;
-    const currentQ = this.data.questions[this.data.currentIndex];
-    
     this.setData({ userAnswer: selectedId });
 
     // 答题正确，记录并报告
@@ -203,8 +265,51 @@ Page({
 
     // 自动下一题
     if (this.data.mode === 'answer' && this.data.isAutoNext && selectedId === this.data.correctAnswer) {
-      setTimeout(() => { this.nextQuestion(); }, 800); 
+      setTimeout(() => { this.nextQuestion(); }, 800);
     }
+  },
+
+  // 提交多选题答案
+  submitMultipleChoice() {
+    const currentQ = this.getCurrentQuestion();
+    if (!currentQ) return;
+
+    const questionId = currentQ.id;
+    const userAns = this.data.userAnswers[questionId] || [];
+
+    // 判断是否答对（比较排序后的数组）
+    const correctArr = this.normalizeAnswerArray(currentQ.correctAnswer);
+    const userArr = userAns.sort();
+
+    const isCorrect = JSON.stringify(correctArr) === JSON.stringify(userArr);
+
+    // 记录进度
+    if (isCorrect) {
+      cloud.syncProgress(this.data.chapterTitle, this.data.currentIndex, 1);
+    } else {
+      cloud.reportError(currentQ.id, userAns.join(','));
+    }
+
+    // 显示结果
+    this.setData({ userAnswer: userArr.length > 0 ? userArr.join(',') : '' });
+
+    // 自动下一题
+    if (this.data.isAutoNext) {
+      setTimeout(() => { this.nextQuestion(); }, 800);
+    }
+  },
+
+  // 标准化答案数组
+  normalizeAnswerArray(answer) {
+    if (!answer) return [];
+    if (Array.isArray(answer)) return answer.map(a => String(a).trim().toUpperCase()).sort();
+    if (typeof answer === 'string') {
+      if (answer.includes(',')) {
+        return answer.split(',').map(s => s.trim().toUpperCase()).sort();
+      }
+      return answer.split('').map(s => s.trim().toUpperCase()).filter(s => s).sort();
+    }
+    return [String(answer).toUpperCase()];
   },
 
   goBack() {
@@ -217,11 +322,16 @@ Page({
   },
 
   prevQuestion() {
+    if (this.data.questions.length === 0) {
+      wx.showToast({ title: '暂无题目', icon: 'none' });
+      return;
+    }
     if (this.data.currentIndex > 0) {
       const newIndex = this.data.currentIndex - 1;
       this.setData({
         currentIndex: newIndex,
-        userAnswer: null
+        userAnswer: null,
+        userAnswers: {}
       }, () => {
         this.updateQuestionData();
       });
@@ -231,11 +341,16 @@ Page({
   },
 
   nextQuestion() {
+    if (this.data.questions.length === 0) {
+      wx.showToast({ title: '暂无题目', icon: 'none' });
+      return;
+    }
     if (this.data.currentIndex < this.data.totalQuestions - 1) {
       const newIndex = this.data.currentIndex + 1;
       this.setData({
         currentIndex: newIndex,
-        userAnswer: null
+        userAnswer: null,
+        userAnswers: {}
       }, () => {
         this.updateQuestionData();
       });
@@ -246,7 +361,7 @@ Page({
 
   // 更新当前题目数据
   updateQuestionData() {
-    const currentQ = this.data.questions[this.data.currentIndex];
+    const currentQ = this.getCurrentQuestion();
     if (!currentQ) return;
 
     this.setData({
@@ -258,7 +373,7 @@ Page({
 
     // 同步进度
     cloud.syncProgress(this.data.chapterTitle, this.data.currentIndex, 0);
-    
+
     // 检查收藏状态
     this.checkFavoriteStatus();
   },
@@ -271,7 +386,7 @@ Page({
   },
 
   async onFavorite() {
-    const currentQ = this.data.questions[this.data.currentIndex];
+    const currentQ = this.getCurrentQuestion();
     if (!currentQ) return;
 
     try {

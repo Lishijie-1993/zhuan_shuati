@@ -121,17 +121,24 @@ Page({
   },
 
   startTimer() {
+    // 记录考试开始时间，用于计算实际经过的时间
+    this.examStartTime = Date.now();
+
     this.timer = setInterval(() => {
-      if (this.data.timeLeft <= 0) {
+      // 计算实际经过的时间（不受后台暂停影响）
+      const elapsedSeconds = Math.floor((Date.now() - this.examStartTime) / 1000);
+      const timeLeft = this.examDuration - elapsedSeconds;
+
+      if (timeLeft <= 0) {
         clearInterval(this.timer);
         this.autoSubmit();
         return;
       }
-      let time = this.data.timeLeft - 1;
-      let min = Math.floor(time / 60);
-      let sec = time % 60;
+
+      let min = Math.floor(timeLeft / 60);
+      let sec = timeLeft % 60;
       this.setData({
-        timeLeft: time,
+        timeLeft: timeLeft,
         timerText: `${min}:${sec < 10 ? '0' + sec : sec}`
       });
     }, 1000);

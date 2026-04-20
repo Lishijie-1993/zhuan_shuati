@@ -41,7 +41,10 @@ exports.main = async (event, context) => {
     let score = 0;
     let correctCount = 0;
     const detail = [];
-    const perQuestionScore = Math.floor(100 / questionIds.length); // 每题分值
+    // 计算每题分值，使用四舍五入确保总分为 100
+    const perQuestionScore = questionIds.length > 0
+      ? Math.round(100 / questionIds.length * 100) / 100  // 保留两位小数精度
+      : 0;
 
     // 解析答案字段，确保格式统一
     function parseAnswer(correctAnswer) {
@@ -111,6 +114,9 @@ exports.main = async (event, context) => {
       }
     }
 
+    // 对总分进行四舍五入，确保得到整数
+    score = Math.round(score);
+
     // 更新考试记录
     const now = new Date();
     await db.collection('user_exam_records').where({
@@ -155,30 +161,23 @@ function normalizeAnswer(answer) {
   return answer.toString().trim().toLowerCase();
 }
 
-// 更新用户总刷题数
+// 更新用户总刷题数（原子操作）
 async function updateUserTotalQuestions(openid, count) {
   try {
-    const userRes = await db.collection('users').where({
+    await db.collection('users').where({
       _openid: openid
-    }).get();
-
-    if (userRes.data.length > 0) {
-      const currentTotal = userRes.data[0].total_questions || 0;
-      await db.collection('users').where({
-        _openid: openid
-      }).update({
-        data: {
-          total_questions: currentTotal + count,
-          updated_at: new Date()
-        }
-      });
-    }
+    }).update({
+      data: {
+        total_questions: _.inc(count),
+        updated_at: new Date()
+      }
+    });
   } catch (err) {
     console.error('更新用户刷题数失败:', err);
   }
 }
 
-// 检查并颁发勋章
+// 检查并颁发勋章（原子操作）
 async function checkMedals(openid) {
   try {
     const userRes = await db.collection('users').where({
@@ -193,31 +192,32 @@ async function checkMedals(openid) {
 
     // 获取所有勋章配置
     const medalsRes = await db.collection('medals_config').get();
-    
+
+    const newMedals = [];
+
     for (const medal of medalsRes.data) {
       // 检查是否已获得
       if (currentMedals.includes(medal._id)) continue;
 
       // 检查是否满足条件
       let shouldAward = false;
-      
+
       if (medal.condition_type === 'total_questions') {
         shouldAward = totalQuestions >= medal.condition_value;
       }
-      // 可以添加其他条件类型...
 
       if (shouldAward) {
-        currentMedals.push(medal._id);
+        newMedals.push(medal._id);
       }
     }
 
-    // 更新用户勋章
-    if (currentMedals.length !== user.medals?.length) {
+    // 如果有新勋章，使用原子操作添加
+    if (newMedals.length > 0) {
       await db.collection('users').where({
         _openid: openid
       }).update({
         data: {
-          medals: currentMedals,
+          medals: _.addToSet(...newMedals),
           updated_at: new Date()
         }
       });

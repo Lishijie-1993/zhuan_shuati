@@ -60,16 +60,22 @@ exports.main = async (event, context) => {
     const skip = (page - 1) * limit;
 
     if (mode === 'random') {
-      // 乱序模式使用 aggregate + sample
-      const aggregateRes = await db.collection('question_bank').aggregate()
-        .sample({ size: limit })
+      // 乱序模式：使用聚合管道实现稳定的随机分页
+      const skip = (page - 1) * limit;
+
+      // 获取一个较大的随机样本（约 500 条），足够覆盖多次分页
+      const randomRes = await db.collection('question_bank').aggregate()
+        .sample({ size: 500 })
         .end();
 
-      const list = aggregateRes.list.map(q => formatQuestion(q));
+      // 从随机样本中手动分页
+      const pageData = randomRes.list.slice(skip, skip + limit);
+      const list = pageData.map(q => formatQuestion(q));
+
       return {
         list,
         total,
-        hasNext: page * limit < total
+        hasNext: skip + list.length < randomRes.list.length
       };
     } else {
       const questionsRes = await db.collection('question_bank')

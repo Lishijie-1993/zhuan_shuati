@@ -122,9 +122,31 @@ page {
   color: #FA5151;
 }
 
+/* 多选题选中状态：紫色边框 */
+.option-item.selected {
+  background-color: #f5f0ff;
+  border-color: #9c27b0;
+  color: #9c27b0;
+}
+
 .option-label {
   flex: 1;
   margin-right: 20rpx;
+}
+
+/* 多选题提交按钮 */
+.multiple-submit {
+  text-align: center;
+  margin: 30rpx 0;
+}
+
+.btn-submit {
+  display: inline-block;
+  padding: 20rpx 60rpx;
+  background-color: #9c27b0;
+  color: #fff;
+  border-radius: 40rpx;
+  font-size: 30rpx;
 }
 
 .swipe-tip {

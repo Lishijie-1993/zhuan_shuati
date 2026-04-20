@@ -20,23 +20,28 @@
     </view>
 
     <view class="options-list">
-      <view 
-        class="option-item {{ (mode === 'recite' && item.id === correctAnswer) || (mode === 'answer' && userAnswer !== null && item.id === correctAnswer) ? 'active-correct' : '' }} {{ mode === 'answer' && userAnswer !== null && item.id !== correctAnswer && userAnswer === item.id ? 'active-error' : '' }}" 
-        wx:for="{{options}}" 
+      <view
+        class="option-item {{helper.isSelected(userAnswers[questions[currentIndex].id], item.id) ? 'selected' : ''}} {{ (mode === 'recite' && helper.isCorrect(item.id, correctAnswer)) || (mode === 'answer' && userAnswer !== null && helper.isCorrect(item.id, correctAnswer)) ? 'active-correct' : '' }} {{ mode === 'answer' && userAnswer !== null && helper.isCorrect(item.id, correctAnswer) === false && helper.isUserWrong(userAnswers[questions[currentIndex].id], item.id) ? 'active-error' : '' }}"
+        wx:for="{{options}}"
         wx:key="id"
         bindtap="selectOption"
         data-id="{{item.id}}"
       >
         <text class="option-label">{{item.id}}. {{item.text}}</text>
-        
-        <icon wx:if="{{ (mode === 'recite' && item.id === correctAnswer) || (mode === 'answer' && userAnswer !== null && item.id === correctAnswer) }}" type="success" size="18" color="#07C160"></icon>
-        
-        <icon wx:if="{{ mode === 'answer' && userAnswer !== null && item.id !== correctAnswer && userAnswer === item.id }}" type="warn" size="18" color="#FA5151"></icon>
+
+        <icon wx:if="{{ (mode === 'recite' && helper.isCorrect(item.id, correctAnswer)) || (mode === 'answer' && userAnswer !== null && helper.isCorrect(item.id, correctAnswer)) }}" type="success" size="18" color="#07C160"></icon>
+
+        <icon wx:if="{{ mode === 'answer' && userAnswer !== null && helper.isCorrect(item.id, correctAnswer) === false && helper.isUserWrong(userAnswers[questions[currentIndex].id], item.id) }}" type="warn" size="18" color="#FA5151"></icon>
       </view>
     </view>
 
+    <!-- 多选题提交按钮 -->
+    <view class="multiple-submit" wx:if="{{questions[currentIndex].type === 'multiple' && !userAnswer && userAnswers[questions[currentIndex].id] && userAnswers[questions[currentIndex].id].length > 0}}">
+      <button class="btn-submit" bindtap="submitMultipleChoice">确认答案</button>
+    </view>
+
     <view class="swipe-tip">
-      左右滑动可切换上下题{{isAutoNext ? '，答对自动下一题' : ''}}
+      {{questions[currentIndex].type === 'multiple' ? '多选题：点击选项切换选中状态，确认后提交' : '左右滑动可切换上下题'}}{{isAutoNext ? '，答对自动下一题' : ''}}
     </view>
 
     <view class="analysis-box" wx:if="{{mode === 'recite' || userAnswer}}">
@@ -66,7 +71,7 @@
     <view class="action-item center">
       <text class="progress-text">{{currentIndex + 1}}/{{totalQuestions}}</text>
     </view>
-    
+
     <view class="action-item" bindtap="onFavorite">
       <image src="{{isFavorited ? '/images/icons/favorite.png' : '/images/icons/favorite2.png'}}" class="action-icon"></image>
       <text style="{{isFavorited ? 'color: #ff9800;' : ''}}">{{isFavorited ? '已收藏' : '收藏'}}</text>
@@ -78,3 +83,35 @@
     </view>
   </view>
 </view>
+
+<wxs module="helper">
+  module.exports = {
+    // 检查选项是否被选中
+    isSelected: function(userAnswers, optionId) {
+      if (!userAnswers) return false;
+      if (typeof userAnswers === 'string') return userAnswers === optionId;
+      if (Array.isArray(userAnswers)) return userAnswers.indexOf(optionId) > -1;
+      return false;
+    },
+    // 检查选项是否正确答案
+    isCorrect: function(optionId, correctAnswer) {
+      if (!correctAnswer) return false;
+      if (typeof correctAnswer === 'string') {
+        if (correctAnswer.indexOf(',') > -1) {
+          var parts = correctAnswer.split(',');
+          for (var i = 0; i < parts.length; i++) {
+            if (parts[i].trim() === optionId) return true;
+          }
+          return false;
+        }
+        return correctAnswer === optionId;
+      }
+      if (Array.isArray(correctAnswer)) return correctAnswer.indexOf(optionId) > -1;
+      return false;
+    },
+    // 检查用户是否选错了这个选项
+    isUserWrong: function(userAnswers, optionId) {
+      return this.isSelected(userAnswers, optionId);
+    }
+  }
+</wxs>

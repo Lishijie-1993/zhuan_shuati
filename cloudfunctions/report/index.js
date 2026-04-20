@@ -3,6 +3,7 @@ const cloud = require('wx-server-sdk');
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
+const _ = db.command;
 
 exports.main = async (event, context) => {
   const { questionId, wrongOption } = event;
@@ -59,24 +60,17 @@ exports.main = async (event, context) => {
   }
 };
 
-// 更新用户错题数量
+// 更新用户错题数量（原子操作）
 async function updateUserErrorCount(openid, delta) {
   try {
-    const userRes = await db.collection('users').where({
+    await db.collection('users').where({
       _openid: openid
-    }).get();
-
-    if (userRes.data.length > 0) {
-      const currentCount = userRes.data[0].wrong_questions || 0;
-      await db.collection('users').where({
-        _openid: openid
-      }).update({
-        data: {
-          wrong_questions: currentCount + delta,
-          updated_at: new Date()
-        }
-      });
-    }
+    }).update({
+      data: {
+        wrong_questions: _.inc(delta),
+        updated_at: new Date()
+      }
+    });
   } catch (err) {
     console.error('更新错题数量失败:', err);
   }
