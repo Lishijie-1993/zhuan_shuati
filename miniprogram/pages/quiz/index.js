@@ -1,4 +1,5 @@
-// miniprogram/pages/quiz/index.js
+// pages/quiz/index.js
+const cloud = require('../../utils/cloud.js');
 const { STORAGE_KEYS } = require('../../utils/constants.js');
 
 Page({
@@ -7,18 +8,14 @@ Page({
     mode: 'answer',
     isAutoNext: false,
     currentIndex: 0,
-    totalQuestions: 164,
-    correctAnswer: 'C',
+    totalQuestions: 0,
+    correctAnswer: '',
     userAnswer: null,
     isFavorited: false,
-    analysisText: '裂隙水赋存于岩石裂隙中的地下水，其特点正是水量一般不大，但水压往往较大。当裂隙水与其他水源没有水力联系时，由于缺乏水源补给，其涌水量会逐渐减少，乃至疏干。相反，如果与其他水源存在水力联系，涌水量则会因得到补给而逐步增加，这种情况容易导致突水事故的发生。因此，题目描述的特点与裂隙水完全相符。',
-    options: [
-      { id: 'A', text: '涌水量介于100~500m³/h' },
-      { id: 'B', text: '水压大，水量丰富，一般为500~1000m³/h' },
-      { id: 'C', text: '静储量大，动储量小，一般为80~500m³/h' },
-      { id: 'D', text: '以静储量为主，动储量变化范围大，可由每小时10m³至数万立方米' }
-    ],
-    currentQuestionText: '根据矿床充水主要含水层的类型，将固体矿床划分为以孔隙含水层为主的充水矿床、以裂隙含水层为主的充水矿床和以岩溶含水层为主的充水矿床。下列选项中属于构造裂隙含水层型矿坑涌水特点的是（ ）。'
+    analysisText: '',
+    options: [],
+    currentQuestionText: '',
+    questions: []
   },
 
   onLoad(options) {
@@ -27,33 +24,98 @@ Page({
       this.setData({
         chapterTitle: decodedTitle
       });
-      wx.setNavigationBarTitle({
-        title: decodedTitle
-      });
+      wx.setNavigationBarTitle({ title: decodedTitle });
     }
-    this.checkFavoriteStatus();
+    
+    // 加载题目
+    this.loadQuestions();
   },
 
   onShow() {
     this.checkFavoriteStatus();
   },
 
+  // 加载题目列表
+  async loadQuestions() {
+    try {
+      wx.showLoading({ title: '加载中...' });
+      
+      const res = await cloud.getQuestions(this.data.chapterTitle, 'normal');
+      
+      if (res && res.list && res.list.length > 0) {
+        const questions = res.list;
+        const firstQ = questions[0];
+        
+        this.setData({
+          questions,
+          totalQuestions: questions.length,
+          currentQuestionText: firstQ.content,
+          options: firstQ.options,
+          correctAnswer: firstQ.correctAnswer,
+          analysisText: firstQ.analysis,
+          currentIndex: 0
+        });
+        
+        this.checkFavoriteStatus();
+      } else {
+        this.loadMockData();
+      }
+      
+      wx.hideLoading();
+    } catch (err) {
+      console.error('加载题目失败:', err);
+      wx.hideLoading();
+      this.loadMockData();
+    }
+  },
+
+  // 加载模拟数据（云函数不可用时）
+  loadMockData() {
+    const mockQuestions = [
+      {
+        id: 'q1',
+        content: '根据矿床充水主要含水层的类型，将固体矿床划分为以孔隙含水层为主的充水矿床、以裂隙含水层为主的充水矿床和以岩溶含水层为主的充水矿床。下列选项中属于构造裂隙含水层型矿坑涌水特点的是（ ）。',
+        options: [
+          { id: 'A', text: '涌水量介于100~500m³/h' },
+          { id: 'B', text: '水压大，水量丰富，一般为500~1000m³/h' },
+          { id: 'C', text: '静储量大，动储量小，一般为80~500m³/h' },
+          { id: 'D', text: '以静储量为主，动储量变化范围大，可由每小时10m³至数万立方米' }
+        ],
+        correctAnswer: 'C',
+        analysis: '裂隙水赋存于岩石裂隙中的地下水，其特点正是水量一般不大，但水压往往较大。'
+      }
+    ];
+
+    this.setData({
+      questions: mockQuestions,
+      totalQuestions: mockQuestions.length,
+      currentQuestionText: mockQuestions[0].content,
+      options: mockQuestions[0].options,
+      correctAnswer: mockQuestions[0].correctAnswer,
+      analysisText: mockQuestions[0].analysis
+    });
+
+    this.checkFavoriteStatus();
+  },
+
+  // 检查收藏状态
   checkFavoriteStatus() {
+    if (this.data.questions.length === 0) return;
+    
     try {
       const favorites = wx.getStorageSync(STORAGE_KEYS.FAVORITES) || [];
-      const questionId = `${this.data.chapterTitle}_${this.data.currentIndex}`;
-      const isFavorited = favorites.some(item => item.id === questionId);
+      const currentQ = this.data.questions[this.data.currentIndex];
+      if (!currentQ) return;
+      
+      const isFavorited = favorites.some(item => item.id === currentQ.id);
       this.setData({ isFavorited });
     } catch (e) {
       console.error('读取收藏状态失败:', e);
-      this.setData({ isFavorited: false });
     }
   },
 
   toggleAutoNext() {
-    this.setData({
-      isAutoNext: !this.data.isAutoNext
-    });
+    this.setData({ isAutoNext: !this.data.isAutoNext });
     wx.showToast({
       title: this.data.isAutoNext ? '已开启自动下一题' : '已切换为手动模式',
       icon: 'none'
@@ -74,14 +136,26 @@ Page({
     }
 
     const selectedId = e.currentTarget.dataset.id;
-    this.setData({
-      userAnswer: selectedId
-    });
+    const currentQ = this.data.questions[this.data.currentIndex];
+    
+    this.setData({ userAnswer: selectedId });
 
+    // 答题正确，记录并报告
+    if (selectedId === this.data.correctAnswer) {
+      // 同步进度到服务器
+      cloud.syncProgress(
+        this.data.chapterTitle,
+        this.data.currentIndex,
+        1
+      );
+    } else {
+      // 答错，记录错题
+      cloud.reportError(currentQ.id, selectedId);
+    }
+
+    // 自动下一题
     if (this.data.mode === 'answer' && this.data.isAutoNext && selectedId === this.data.correctAnswer) {
-      setTimeout(() => {
-        this.nextQuestion();
-      }, 800); 
+      setTimeout(() => { this.nextQuestion(); }, 800); 
     }
   },
 
@@ -91,86 +165,92 @@ Page({
 
   prevQuestion() {
     if (this.data.currentIndex > 0) {
+      const newIndex = this.data.currentIndex - 1;
       this.setData({
-        currentIndex: this.data.currentIndex - 1,
+        currentIndex: newIndex,
         userAnswer: null
       }, () => {
-        this.checkFavoriteStatus();
+        this.updateQuestionData();
       });
     } else {
-      wx.showToast({
-        title: '已经是第一题了',
-        icon: 'none'
-      });
-    }
-  },
-
-  onAnalysis() {
-    if(this.data.mode === 'answer' && !this.data.userAnswer) {
-      this.setData({ userAnswer: 'SHOW_ANALYSIS' });
-    }
-    wx.showToast({
-      title: '查看详细解析',
-      icon: 'none'
-    });
-  },
-
-  onFavorite() {
-    try {
-      let favorites = wx.getStorageSync(STORAGE_KEYS.FAVORITES) || [];
-      const questionId = `${this.data.chapterTitle}_${this.data.currentIndex}`;
-      const isNowFavorited = !this.data.isFavorited;
-
-      if (isNowFavorited) {
-        const favoriteItem = {
-          id: questionId,
-          chapterTitle: this.data.chapterTitle,
-          questionText: this.data.currentQuestionText || this.data.options[0]?.text || '',
-          options: this.data.options,
-          correctAnswer: this.data.correctAnswer,
-          analysisText: this.data.analysisText || '暂无解析',
-          timestamp: Date.now()
-        };
-        
-        const exists = favorites.some(item => item.id === questionId);
-        if (!exists) {
-          favorites.push(favoriteItem);
-          wx.setStorageSync(STORAGE_KEYS.FAVORITES, favorites);
-          wx.showToast({ title: '收藏成功', icon: 'success' });
-        } else {
-          wx.showToast({ title: '已收藏过该题', icon: 'none' });
-        }
-      } else {
-        const beforeLength = favorites.length;
-        favorites = favorites.filter(item => item.id !== questionId);
-        
-        if (favorites.length < beforeLength) {
-          wx.setStorageSync(STORAGE_KEYS.FAVORITES, favorites);
-          wx.showToast({ title: '已取消收藏', icon: 'none' });
-        }
-      }
-
-      this.setData({ isFavorited: isNowFavorited });
-      
-    } catch (e) {
-      console.error('收藏操作失败:', e);
-      wx.showToast({ title: '操作失败，请重试', icon: 'none' });
+      wx.showToast({ title: '已经是第一题了', icon: 'none' });
     }
   },
 
   nextQuestion() {
     if (this.data.currentIndex < this.data.totalQuestions - 1) {
+      const newIndex = this.data.currentIndex + 1;
       this.setData({
-        currentIndex: this.data.currentIndex + 1,
+        currentIndex: newIndex,
         userAnswer: null
       }, () => {
-        this.checkFavoriteStatus();
+        this.updateQuestionData();
       });
     } else {
-      wx.showToast({
-        title: '已经是最后一题了',
-        icon: 'none'
-      });
+      wx.showToast({ title: '已经是最后一题了', icon: 'none' });
+    }
+  },
+
+  // 更新当前题目数据
+  updateQuestionData() {
+    const currentQ = this.data.questions[this.data.currentIndex];
+    if (!currentQ) return;
+
+    this.setData({
+      currentQuestionText: currentQ.content,
+      options: currentQ.options,
+      correctAnswer: currentQ.correctAnswer,
+      analysisText: currentQ.analysis || '暂无解析'
+    });
+
+    // 同步进度
+    cloud.syncProgress(this.data.chapterTitle, this.data.currentIndex, 0);
+    
+    // 检查收藏状态
+    this.checkFavoriteStatus();
+  },
+
+  onAnalysis() {
+    if (this.data.mode === 'answer' && !this.data.userAnswer) {
+      this.setData({ userAnswer: 'SHOW_ANALYSIS' });
+    }
+    wx.showToast({ title: '查看详细解析', icon: 'none' });
+  },
+
+  async onFavorite() {
+    const currentQ = this.data.questions[this.data.currentIndex];
+    if (!currentQ) return;
+
+    try {
+      const action = this.data.isFavorited ? 'remove' : 'add';
+      const res = await cloud.toggleFavorite(currentQ.id, action);
+
+      if (res) {
+        // 更新本地存储
+        let favorites = wx.getStorageSync(STORAGE_KEYS.FAVORITES) || [];
+        
+        if (action === 'add') {
+          favorites.push({
+            id: currentQ.id,
+            chapterTitle: this.data.chapterTitle,
+            questionText: currentQ.content,
+            options: currentQ.options,
+            correctAnswer: currentQ.correctAnswer,
+            analysisText: currentQ.analysis || '暂无解析',
+            timestamp: Date.now()
+          });
+          wx.showToast({ title: '收藏成功', icon: 'success' });
+        } else {
+          favorites = favorites.filter(item => item.id !== currentQ.id);
+          wx.showToast({ title: '已取消收藏', icon: 'none' });
+        }
+        
+        wx.setStorageSync(STORAGE_KEYS.FAVORITES, favorites);
+        this.setData({ isFavorited: !this.data.isFavorited });
+      }
+    } catch (err) {
+      console.error('收藏操作失败:', err);
+      wx.showToast({ title: '操作失败，请重试', icon: 'none' });
     }
   }
 });

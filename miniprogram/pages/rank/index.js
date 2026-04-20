@@ -1,7 +1,9 @@
 // pages/rank/index.js
+const cloud = require('../../utils/cloud.js');
+
 Page({
   data: {
-    currentTab: 'total', // total | week | today
+    currentTab: 'total',
     rankList: [],
     myRank: null,
     weekCount: 0,
@@ -13,7 +15,6 @@ Page({
   },
 
   onShow() {
-    // 每次显示刷新排名
     this.loadRankData();
   },
 
@@ -27,9 +28,27 @@ Page({
   },
 
   // 加载排行数据
-  loadRankData() {
+  async loadRankData() {
+    try {
+      const res = await cloud.getLeaderboard(this.data.currentTab);
+      
+      if (res && res.list) {
+        this.setData({
+          rankList: res.list,
+          myRank: res.myRank
+        });
+      } else {
+        this.loadMockData();
+      }
+    } catch (err) {
+      console.error('加载排行榜失败:', err);
+      this.loadMockData();
+    }
+  },
+
+  // 本地模拟数据
+  loadMockData() {
     const mockData = this.generateMockData();
-    
     this.setData({
       rankList: mockData,
       myRank: {
@@ -40,13 +59,10 @@ Page({
         count: 256,
         activeDays: 15,
         isMe: true
-      },
-      weekCount: mockData[0] ? Math.floor(mockData[0].weekCount) : 0,
-      todayCount: mockData[0] ? mockData[0].todayCount : 0
+      }
     });
   },
 
-  // 生成模拟数据
   generateMockData() {
     const baseData = [
       { id: 1, nickName: '安全小达人', avatar: '/images/icons/user.png', count: 2847, weekCount: 156, todayCount: 23 },
@@ -71,7 +87,6 @@ Page({
       { id: 20, nickName: '平安是福', avatar: '/images/icons/user.png', count: 854, weekCount: 25, todayCount: 2 }
     ];
 
-    // 根据当前 Tab 排序
     let sortedData = [...baseData];
     if (this.data.currentTab === 'week') {
       sortedData.sort((a, b) => b.weekCount - a.weekCount);
@@ -81,7 +96,6 @@ Page({
       sortedData.sort((a, b) => b.count - a.count);
     }
 
-    // 添加排名
     return sortedData.map((item, index) => ({
       ...item,
       rank: index + 1

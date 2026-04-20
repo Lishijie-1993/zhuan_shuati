@@ -1,4 +1,5 @@
 // pages/user/index.js
+const cloud = require('../../utils/cloud.js');
 const { STORAGE_KEYS } = require('../../utils/constants.js');
 
 Page({
@@ -7,11 +8,11 @@ Page({
       nickname: '安全学员',
       id: '888888',
       avatar: '/images/icons/user.png',
-      totalQuestions: 1286,
-      favorites: 56,
-      wrongQuestions: 89,
-      medals: 5,
-      continueDays: 7
+      totalQuestions: 0,
+      favorites: 0,
+      wrongQuestions: 0,
+      medals: 0,
+      continueDays: 0
     }
   },
 
@@ -23,49 +24,53 @@ Page({
     this.loadUserInfo();
   },
 
-  loadUserInfo() {
-    // 从本地存储读取用户信息
-    const userInfo = wx.getStorageSync(STORAGE_KEYS.USER_INFO);
-    if (userInfo) {
-      this.setData({ userInfo });
+  // 加载用户信息
+  async loadUserInfo() {
+    try {
+      const res = await cloud.getUserInfo();
+      
+      if (res && res.userInfo) {
+        // 保存到本地存储
+        wx.setStorageSync(STORAGE_KEYS.USER_INFO, res.userInfo);
+        this.setData({ userInfo: res.userInfo });
+      } else {
+        // 使用本地缓存
+        const localUser = wx.getStorageSync(STORAGE_KEYS.USER_INFO);
+        if (localUser) {
+          this.setData({ userInfo: localUser });
+        }
+      }
+    } catch (err) {
+      console.error('加载用户信息失败:', err);
+      const localUser = wx.getStorageSync(STORAGE_KEYS.USER_INFO);
+      if (localUser) {
+        this.setData({ userInfo: localUser });
+      }
     }
   },
 
   goToProfile() {
-    wx.showToast({
-      title: '功能开发中',
-      icon: 'none'
-    });
+    wx.showToast({ title: '功能开发中', icon: 'none' });
   },
 
   goToHistory() {
-    wx.navigateTo({
-      url: '/pages/history/index'
-    });
+    wx.navigateTo({ url: '/pages/history/index' });
   },
 
   goToQuizHistory() {
-    wx.navigateTo({
-      url: '/pages/history/index'
-    });
+    wx.navigateTo({ url: '/pages/history/index' });
   },
 
   goToFavorites() {
-    wx.navigateTo({
-      url: '/pages/favorite/index'
-    });
+    wx.navigateTo({ url: '/pages/favorite/index' });
   },
 
   goToWrongQuestions() {
-    wx.navigateTo({
-      url: '/pages/error/index'
-    });
+    wx.navigateTo({ url: '/pages/error/index' });
   },
 
   goToMedals() {
-    wx.navigateTo({
-      url: '/pages/medals/index'
-    });
+    wx.navigateTo({ url: '/pages/medals/index' });
   },
 
   shareToFriend() {
@@ -76,10 +81,7 @@ Page({
   },
 
   goToFeedback() {
-    wx.showToast({
-      title: '功能开发中',
-      icon: 'none'
-    });
+    wx.showToast({ title: '功能开发中', icon: 'none' });
   },
 
   goToAbout() {
@@ -92,9 +94,7 @@ Page({
   },
 
   goToSettings() {
-    wx.navigateTo({
-      url: '/pages/settings/index'
-    });
+    wx.navigateTo({ url: '/pages/settings/index' });
   },
 
   logout() {
@@ -106,10 +106,7 @@ Page({
           wx.removeStorageSync(STORAGE_KEYS.USER_INFO);
           wx.removeStorageSync(STORAGE_KEYS.FAVORITES);
           wx.removeStorageSync(STORAGE_KEYS.ERRORS);
-          wx.showToast({
-            title: '已退出登录',
-            icon: 'success'
-          });
+          wx.showToast({ title: '已退出登录', icon: 'success' });
         }
       }
     });
