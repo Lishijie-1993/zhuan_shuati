@@ -19,16 +19,16 @@
   <scroll-view class="quiz-content" scroll-y>
     <view class="question-info">
       <text class="q-number">第{{currentIndex + 1}}题</text>
-      <view class="q-type-tag">单选题</view>
+      <view class="q-type-tag">{{questions[currentIndex].type === 'single' ? '单选题' : (questions[currentIndex].type === 'multiple' ? '多选题' : '判断题')}}</view>
     </view>
 
     <view class="question-text">
-      根据矿床充水主要含水层的类型，将固体矿床划分为以孔隙含水层为主的充水矿床、以裂隙含水层为主的充水矿床和以岩溶含水层为主的充水矿床。下列选项中属于构造裂隙含水层型矿坑涌水特点的是（ ）。
+      {{currentQuestionText}}
     </view>
 
     <view class="options-list">
       <view 
-        class="option-item {{ (mode === 'recite' && item.id === correctAnswer) || (mode === 'answer' && userAnswer === item.id && item.id === correctAnswer) ? 'active-correct' : '' }} {{ mode === 'answer' && userAnswer === item.id && item.id !== correctAnswer ? 'active-error' : '' }}" 
+        class="option-item {{ (mode === 'recite' && item.id === correctAnswer) || (mode === 'answer' && userAnswer !== null && item.id === correctAnswer) ? 'active-correct' : '' }} {{ mode === 'answer' && userAnswer !== null && item.id !== correctAnswer && userAnswer === item.id ? 'active-error' : '' }}" 
         wx:for="{{options}}" 
         wx:key="id"
         bindtap="selectOption"
@@ -36,9 +36,9 @@
       >
         <text class="option-label">{{item.id}}. {{item.text}}</text>
         
-        <icon wx:if="{{ (mode === 'recite' && item.id === correctAnswer) || (mode === 'answer' && userAnswer === item.id && item.id === correctAnswer) }}" type="success" size="18" color="#07C160"></icon>
+        <icon wx:if="{{ (mode === 'recite' && item.id === correctAnswer) || (mode === 'answer' && userAnswer !== null && item.id === correctAnswer) }}" type="success" size="18" color="#07C160"></icon>
         
-        <icon wx:if="{{ mode === 'answer' && userAnswer === item.id && item.id !== correctAnswer }}" type="warn" size="18" color="#FA5151"></icon>
+        <icon wx:if="{{ mode === 'answer' && userAnswer !== null && item.id !== correctAnswer && userAnswer === item.id }}" type="warn" size="18" color="#FA5151"></icon>
       </view>
     </view>
 

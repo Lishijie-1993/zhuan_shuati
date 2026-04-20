@@ -22,14 +22,14 @@
       <scroll-view scroll-y class="quiz-content">
         <view class="question-info">
           <text class="q-number">第{{qIndex + 1}}题</text>
-          <view class="q-type-tag">单选题</view>
+          <view class="q-type-tag">{{item.type === 'single' ? '单选题' : (item.type === 'multiple' ? '多选题' : '判断题')}}</view>
         </view>
 
         <view class="question-text">{{item.questionText}}</view>
 
         <view class="options-list">
           <view 
-            class="option-item {{ (mode === 'recite' && opt.id === item.correctAnswer) || (mode === 'answer' && userAnswers[item.id] === opt.id && opt.id === item.correctAnswer) ? 'active-correct' : '' }} {{ mode === 'answer' && userAnswers[item.id] === opt.id && opt.id !== item.correctAnswer ? 'active-error' : '' }}" 
+            class="option-item {{ (mode === 'recite' && opt.id === item.correctAnswer) || (mode === 'answer' && userAnswers[item.id] !== null && opt.id === item.correctAnswer) ? 'active-correct' : '' }} {{ mode === 'answer' && userAnswers[item.id] !== null && opt.id !== item.correctAnswer && userAnswers[item.id] === opt.id ? 'active-error' : '' }}" 
             wx:for="{{item.options}}" 
             wx:for-item="opt"
             wx:key="id"
@@ -39,8 +39,8 @@
             data-index="{{qIndex}}"
           >
             <text class="option-label">{{opt.id}}. {{opt.text}}</text>
-            <icon wx:if="{{ (mode === 'recite' && opt.id === item.correctAnswer) || (mode === 'answer' && userAnswers[item.id] === opt.id && opt.id === item.correctAnswer) }}" type="success" size="18" color="#07C160"></icon>
-            <icon wx:if="{{ mode === 'answer' && userAnswers[item.id] === opt.id && opt.id !== item.correctAnswer }}" type="warn" size="18" color="#FA5151"></icon>
+            <icon wx:if="{{ (mode === 'recite' && opt.id === item.correctAnswer) || (mode === 'answer' && userAnswers[item.id] !== null && opt.id === item.correctAnswer) }}" type="success" size="18" color="#07C160"></icon>
+            <icon wx:if="{{ mode === 'answer' && userAnswers[item.id] !== null && opt.id !== item.correctAnswer && userAnswers[item.id] === opt.id }}" type="warn" size="18" color="#FA5151"></icon>
           </view>
         </view>
 

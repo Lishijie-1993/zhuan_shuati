@@ -10,7 +10,7 @@
     </view>
   </view>
 
-  <view class="question-card">
+  <view class="question-card" wx:if="{{questions.length > 0}}">
     <view class="q-header">
       <text class="q-type">{{questions[currentIndex].type === 'single' ? '单选题' : (questions[currentIndex].type === 'multiple' ? '多选题' : '判断题')}}</text>
       <text class="q-score">分值：1分</text>
@@ -30,6 +30,11 @@
         <view class="option-content">{{item.content}}</view>
       </view>
     </view>
+  </view>
+
+  <!-- 题库加载中或为空时的占位 -->
+  <view wx:if="{{questions.length === 0}}" class="loading-placeholder">
+    <text>题目加载中...</text>
   </view>
 
   <view class="footer">

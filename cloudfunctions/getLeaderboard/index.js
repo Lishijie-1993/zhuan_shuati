@@ -23,8 +23,10 @@ exports.main = async (event, context) => {
     }
 
     // 获取排行榜数据（分页）
+    // 使用 _id 作为第二排序条件，确保同分用户排序稳定，避免翻页 Bug
     const rankRes = await db.collection('users')
       .orderBy(sortField, 'desc')
+      .orderBy('_id', 'asc')
       .skip(skip)
       .limit(pageSize)
       .get();
