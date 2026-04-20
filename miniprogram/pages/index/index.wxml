@@ -1,0 +1,56 @@
+<view class="container">
+
+<view class="header-banner">
+  <view class="banner-left">
+    <text class="banner-title">安全工程师</text>
+    <text class="banner-subtitle">在线刷题 | 试题解析 | 全面提升</text>
+    <view class="banner-tag" bindtap="toExam">模拟考试</view>
+  </view>
+  <image class="banner-illustration" src="/images/banner_icon.png" mode="aspectFit"></image>
+</view>
+
+<view class="notice-bar">
+  <view class="notice-label">公告</view>
+  <swiper class="notice-swiper" vertical autoplay circular interval="4000">
+    <swiper-item>
+      <text class="notice-item">微信小程序变成App一样的打开和使用</text>
+    </swiper-item>
+    <swiper-item>
+      <text class="notice-item">2026年度中级安全工程师题库已全面更新</text>
+    </swiper-item>
+  </swiper>
+</view>
+
+<view class="menu-grid">
+  <view class="menu-item" wx:for="{{menus}}" wx:key="name" bindtap="onMenuClick" data-name="{{item.name}}">
+    <view class="menu-icon-wrapper" style="background: {{item.bgColor}}">
+      <image class="menu-icon" src="{{item.icon}}"></image>
+    </view>
+    <text class="menu-name">{{item.name}}</text>
+  </view>
+</view>
+
+<view class="main-actions">
+  <view class="action-btn btn-start" bindtap="startQuiz">
+    <text class="action-title">开始刷题</text>
+    <text class="action-tip">GO PRACTICE</text>
+  </view>
+  <view class="action-btn btn-exam" bindtap="toExam">
+    <text class="action-title">模拟考试</text>
+    <text class="action-tip">MOCK EXAM</text>
+  </view>
+</view>
+
+<view class="exam-countdown">
+  <view class="exam-left">
+    <text class="exam-label">中级注册安全工程师考试</text>
+    <view class="exam-days">
+      距考试还剩 <text class="days-highlight">187</text> 天
+    </view>
+  </view>
+  <view class="exam-right">
+    <text class="exam-arrow">详情 ></text>
+  </view>
+</view>
+
+</view>

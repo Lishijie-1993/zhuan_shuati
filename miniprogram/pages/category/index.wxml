@@ -1,0 +1,27 @@
+<view class="category-container">
+  <scroll-view class="nav-left" scroll-y>
+    <view
+      class="nav-item {{activeCategory === index ? 'active' : ''}}"
+      wx:for="{{categories}}"
+      wx:key="name"
+      bindtap="switchCategory"
+      data-index="{{index}}"
+    >
+      {{item.name}}
+    </view>
+  </scroll-view>
+
+  <scroll-view class="nav-right" scroll-y>
+    <view class="category-header">
+      <view class="dot"></view>
+      <text class="category-main-title">{{categories[activeCategory].type}} 《{{categories[activeCategory].name}}》</text>
+    </view>
+
+    <view class="chapter-box">
+      <view class="chapter-row" wx:for="{{categories[activeCategory].chapters}}" wx:key="*this">
+        <text class="chapter-text">{{item}}</text>
+        <image class="edit-icon" src="/images/icons/edit_pen.png"></image>
+      </view>
+    </view>
+  </scroll-view>
+</view>

@@ -1,16 +1,40 @@
 {
   "pages": [
     "pages/index/index",
-    "pages/example/index"
+    "pages/category/index",
+    "pages/info/index",
+    "pages/rank/index",
+    "pages/user/index"
   ],
-  "window": {
-    "backgroundColor": "#F6F6F6",
-    "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#F6F6F6",
-    "navigationBarTitleText": "云开发 QuickStart",
-    "navigationBarTextStyle": "black"
-  },
-  "sitemapLocation": "sitemap.json",
-  "style": "v2",
-  "lazyCodeLoading": "requiredComponents"
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#2D5CF6",
+    "backgroundColor": "#ffffff",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "刷题",
+        "iconPath": "images/tab/home.png",
+        "selectedIconPath": "images/tab/home_active.png"
+      },
+      {
+        "pagePath": "pages/info/index",
+        "text": "资讯",
+        "iconPath": "images/tab/info.png",
+        "selectedIconPath": "images/tab/info_active.png"
+      },
+      {
+        "pagePath": "pages/rank/index",
+        "text": "排行",
+        "iconPath": "images/tab/rank.png",
+        "selectedIconPath": "images/tab/rank_active.png"
+      },
+      {
+        "pagePath": "pages/user/index",
+        "text": "我的",
+        "iconPath": "images/tab/user.png",
+        "selectedIconPath": "images/tab/user_active.png"
+      }
+    ]
+  }
 }
