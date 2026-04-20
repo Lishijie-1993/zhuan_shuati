@@ -1,2 +1,124 @@
-<!--pages/rank/index.wxml-->
-<text>pages/rank/index.wxml</text>
+<view class="container">
+  <!-- 顶部背景区域 -->
+  <view class="header-bg">
+    <view class="status-bar"></view>
+    <view class="nav-bar">
+      <text class="nav-title">排行榜</text>
+    </view>
+  </view>
+
+  <!-- Tab 切换 -->
+  <view class="tab-section">
+    <view class="tab-box">
+      <view 
+        class="tab-item {{currentTab === 'total' ? 'active' : ''}}" 
+        bindtap="switchTab" 
+        data-tab="total"
+      >
+        <text class="tab-text">总排行</text>
+        <text class="tab-sub">累计刷题</text>
+      </view>
+      <view 
+        class="tab-item {{currentTab === 'week' ? 'active' : ''}}" 
+        bindtap="switchTab" 
+        data-tab="week"
+      >
+        <text class="tab-text">本周排行</text>
+        <text class="tab-sub">{{weekCount}}题</text>
+      </view>
+      <view 
+        class="tab-item {{currentTab === 'today' ? 'active' : ''}}" 
+        bindtap="switchTab" 
+        data-tab="today"
+      >
+        <text class="tab-text">今日排行</text>
+        <text class="tab-sub">{{todayCount}}题</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 排行榜内容 -->
+  <scroll-view class="rank-content" scroll-y>
+    <!-- 前三名展示 -->
+    <view class="top-three" wx:if="{{rankList.length >= 3}}">
+      <!-- 第二名 -->
+      <view class="top-item second">
+        <view class="avatar-wrap silver">
+          <image class="avatar" src="{{rankList[1].avatar}}" mode="aspectFill"></image>
+          <view class="rank-badge silver">2</view>
+        </view>
+        <text class="top-name">{{rankList[1].nickName}}</text>
+        <text class="top-count">{{rankList[1].count}}题</text>
+      </view>
+      
+      <!-- 第一名 -->
+      <view class="top-item first">
+        <view class="avatar-wrap gold">
+          <image class="avatar" src="{{rankList[0].avatar}}" mode="aspectFill"></image>
+          <view class="rank-badge gold">1</view>
+          <image class="crown" src="/images/icons/crown.png" mode="aspectFit"></image>
+        </view>
+        <text class="top-name">{{rankList[0].nickName}}</text>
+        <text class="top-count highlight">{{rankList[0].count}}题</text>
+      </view>
+      
+      <!-- 第三名 -->
+      <view class="top-item third">
+        <view class="avatar-wrap bronze">
+          <image class="avatar" src="{{rankList[2].avatar}}" mode="aspectFill"></image>
+          <view class="rank-badge bronze">3</view>
+        </view>
+        <text class="top-name">{{rankList[2].nickName}}</text>
+        <text class="top-count">{{rankList[2].count}}题</text>
+      </view>
+    </view>
+
+    <!-- 排名列表 -->
+    <view class="rank-list">
+      <view class="list-header">
+        <text class="list-title">排名详情</text>
+        <text class="list-sub">TOP 100</text>
+      </view>
+      
+      <view 
+        class="rank-item {{item.isMe ? 'is-me' : ''}}" 
+        wx:for="{{rankList}}" 
+        wx:key="id"
+        wx:if="{{index >= 3}}"
+      >
+        <view class="item-rank">
+          <text class="rank-num">{{item.rank > 9 ? item.rank : '0' + item.rank}}</text>
+        </view>
+        <image class="item-avatar" src="{{item.avatar}}" mode="aspectFill"></image>
+        <view class="item-info">
+          <text class="item-name">{{item.nickName}}</text>
+          <text class="item-sub">活跃度 {{item.activeDays}}天</text>
+        </view>
+        <view class="item-count">
+          <text class="count-num">{{item.count}}</text>
+          <text class="count-unit">题</text>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 我的排名 -->
+  <view class="my-rank" wx:if="{{myRank}}">
+    <view class="my-info">
+      <image class="my-avatar" src="{{myRank.avatar}}" mode="aspectFill"></image>
+      <view class="my-detail">
+        <text class="my-name">{{myRank.nickName}}</text>
+        <text class="my-sub">我的排名</text>
+      </view>
+    </view>
+    <view class="my-rank-num">
+      <text class="rank-label">第</text>
+      <text class="rank-value">{{myRank.rank}}</text>
+      <text class="rank-label">名</text>
+    </view>
+    <view class="my-count">
+      <text class="count-num">{{myRank.count}}</text>
+      <text class="count-unit">题</text>
+    </view>
+  </view>
+</view>

@@ -1,2 +1,120 @@
-<!--pages/user/index.wxml-->
-<text>pages/user/index.wxml</text>
+<view class="container">
+  <!-- 顶部用户信息区域 -->
+  <view class="user-header">
+    <view class="status-bar"></view>
+    <view class="nav-bar">
+      <text class="nav-title">我的</text>
+    </view>
+    
+    <view class="user-info">
+      <image class="avatar" src="{{userInfo.avatar}}" mode="aspectFill"></image>
+      <view class="user-detail">
+        <text class="nickname">{{userInfo.nickname}}</text>
+        <text class="user-id">ID: {{userInfo.id}}</text>
+      </view>
+      <view class="edit-btn" bindtap="goToProfile">
+        <text>编辑</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 学习数据统计 -->
+  <view class="stats-section">
+    <view class="stat-item" bindtap="goToQuizHistory">
+      <text class="stat-num">{{userInfo.totalQuestions}}</text>
+      <text class="stat-label">刷题数</text>
+    </view>
+    <view class="stat-divider"></view>
+    <view class="stat-item" bindtap="goToFavorites">
+      <text class="stat-num">{{userInfo.favorites}}</text>
+      <text class="stat-label">收藏题</text>
+    </view>
+    <view class="stat-divider"></view>
+    <view class="stat-item" bindtap="goToWrongQuestions">
+      <text class="stat-num">{{userInfo.wrongQuestions}}</text>
+      <text class="stat-label">错题数</text>
+    </view>
+    <view class="stat-divider"></view>
+    <view class="stat-item" bindtap="goToMedals">
+      <text class="stat-num">{{userInfo.medals}}</text>
+      <text class="stat-label">勋章数</text>
+    </view>
+  </view>
+
+  <!-- 功能列表 -->
+  <view class="menu-section">
+    <!-- 学习记录 -->
+    <view class="menu-group">
+      <view class="menu-item" bindtap="goToHistory">
+        <view class="menu-left">
+          <image class="menu-icon" src="/images/icons/history2.png" mode="aspectFit"></image>
+          <text class="menu-text">学习记录</text>
+        </view>
+        <view class="menu-right">
+          <text class="menu-badge" wx:if="{{userInfo.continueDays > 0}}">连续{{userInfo.continueDays}}天</text>
+          <text class="arrow">〉</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 勋章荣誉 -->
+    <view class="menu-group">
+      <view class="menu-item" bindtap="goToMedals">
+        <view class="menu-left">
+          <image class="menu-icon" src="/images/icons/medal.png" mode="aspectFit"></image>
+          <text class="menu-text">我的勋章</text>
+        </view>
+        <view class="menu-right">
+          <text class="arrow">〉</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 其他功能 -->
+    <view class="menu-group">
+      <view class="menu-item" bindtap="shareToFriend">
+        <view class="menu-left">
+          <image class="menu-icon" src="/images/icons/share2.png" mode="aspectFit"></image>
+          <text class="menu-text">分享好友</text>
+        </view>
+        <view class="menu-right">
+          <text class="arrow">〉</text>
+        </view>
+      </view>
+      <view class="menu-item" bindtap="goToFeedback">
+        <view class="menu-left">
+          <image class="menu-icon" src="/images/icons/feedback.png" mode="aspectFit"></image>
+          <text class="menu-text">意见反馈</text>
+        </view>
+        <view class="menu-right">
+          <text class="arrow">〉</text>
+        </view>
+      </view>
+      <view class="menu-item" bindtap="goToAbout">
+        <view class="menu-left">
+          <image class="menu-icon" src="/images/icons/about.png" mode="aspectFit"></image>
+          <text class="menu-text">关于我们</text>
+        </view>
+        <view class="menu-right">
+          <text class="arrow">〉</text>
+        </view>
+      </view>
+      <view class="menu-item" bindtap="goToSettings">
+        <view class="menu-left">
+          <image class="menu-icon" src="/images/icons/settings.png" mode="aspectFit"></image>
+          <text class="menu-text">设置</text>
+        </view>
+        <view class="menu-right">
+          <text class="arrow">〉</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 退出登录 -->
+    <view class="logout-section">
+      <view class="logout-btn" bindtap="logout">
+        <text>退出登录</text>
+      </view>
+    </view>
+  </view>
+</view>

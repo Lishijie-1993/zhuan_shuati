@@ -1,0 +1,130 @@
+<view class="container">
+  <!-- 头部 -->
+  <view class="header">
+    <view class="status-bar"></view>
+    <view class="nav-bar">
+      <view class="back-btn" bindtap="goBack">
+        <text class="back-icon">〈</text>
+      </view>
+      <text class="nav-title">设置</text>
+      <view style="width: 60rpx;"></view>
+    </view>
+  </view>
+
+  <!-- 设置列表 -->
+  <view class="settings-content">
+    <!-- 通用设置 -->
+    <view class="settings-group">
+      <view class="group-title">通用设置</view>
+      <view class="setting-item">
+        <view class="setting-left">
+          <image class="setting-icon" src="/images/icons/notice.png" mode="aspectFit"></image>
+          <text class="setting-text">推送通知</text>
+        </view>
+        <switch checked bindchange="toggleNotify" color="#2D5CF6"/>
+      </view>
+      <view class="setting-item">
+        <view class="setting-left">
+          <image class="setting-icon" src="/images/icons/sound.png" mode="aspectFit"></image>
+          <text class="setting-text">音效</text>
+        </view>
+        <switch checked bindchange="toggleSound" color="#2D5CF6"/>
+      </view>
+      <view class="setting-item">
+        <view class="setting-left">
+          <image class="setting-icon" src="/images/icons/vibrate.png" mode="aspectFit"></image>
+          <text class="setting-text">震动反馈</text>
+        </view>
+        <switch checked bindchange="toggleVibrate" color="#2D5CF6"/>
+      </view>
+    </view>
+
+    <!-- 显示设置 -->
+    <view class="settings-group">
+      <view class="group-title">显示设置</view>
+      <view class="setting-item" bindtap="changeTheme">
+        <view class="setting-left">
+          <image class="setting-icon" src="/images/icons/theme.png" mode="aspectFit"></image>
+          <text class="setting-text">主题</text>
+        </view>
+        <view class="setting-right">
+          <text class="setting-value">蓝色</text>
+          <text class="arrow">〉</text>
+        </view>
+      </view>
+      <view class="setting-item" bindtap="changeFont">
+        <view class="setting-left">
+          <image class="setting-icon" src="/images/icons/font.png" mode="aspectFit"></image>
+          <text class="setting-text">字体大小</text>
+        </view>
+        <view class="setting-right">
+          <text class="setting-value">中</text>
+          <text class="arrow">〉</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 数据管理 -->
+    <view class="settings-group">
+      <view class="group-title">数据管理</view>
+      <view class="setting-item" bindtap="clearCache">
+        <view class="setting-left">
+          <image class="setting-icon" src="/images/icons/clear.png" mode="aspectFit"></image>
+          <text class="setting-text">清除缓存</text>
+        </view>
+        <view class="setting-right">
+          <text class="setting-value">{{cacheSize}}</text>
+          <text class="arrow">〉</text>
+        </view>
+      </view>
+      <view class="setting-item" bindtap="exportData">
+        <view class="setting-left">
+          <image class="setting-icon" src="/images/icons/export.png" mode="aspectFit"></image>
+          <text class="setting-text">导出学习数据</text>
+        </view>
+        <view class="setting-right">
+          <text class="arrow">〉</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 其他 -->
+    <view class="settings-group">
+      <view class="group-title">其他</view>
+      <view class="setting-item" bindtap="checkUpdate">
+        <view class="setting-left">
+          <image class="setting-icon" src="/images/icons/update.png" mode="aspectFit"></image>
+          <text class="setting-text">检查更新</text>
+        </view>
+        <view class="setting-right">
+          <text class="setting-value version">v1.0.0</text>
+          <text class="arrow">〉</text>
+        </view>
+      </view>
+      <view class="setting-item" bindtap="goToPrivacy">
+        <view class="setting-left">
+          <image class="setting-icon" src="/images/icons/privacy.png" mode="aspectFit"></image>
+          <text class="setting-text">隐私政策</text>
+        </view>
+        <view class="setting-right">
+          <text class="arrow">〉</text>
+        </view>
+      </view>
+      <view class="setting-item" bindtap="goToAgreement">
+        <view class="setting-left">
+          <image class="setting-icon" src="/images/icons/agreement.png" mode="aspectFit"></image>
+          <text class="setting-text">用户协议</text>
+        </view>
+        <view class="setting-right">
+          <text class="arrow">〉</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部 -->
+  <view class="footer">
+    <text class="footer-text">安全工程师刷题神器 v1.0.0</text>
+    <text class="footer-sub">让学习更简单</text>
+  </view>
+</view>

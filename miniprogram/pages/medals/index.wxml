@@ -1,0 +1,73 @@
+<view class="container">
+  <!-- 头部 -->
+  <view class="header">
+    <view class="status-bar"></view>
+    <view class="nav-bar">
+      <view class="back-btn" bindtap="goBack">
+        <text class="back-icon">〈</text>
+      </view>
+      <text class="nav-title">我的勋章</text>
+      <view style="width: 60rpx;"></view>
+    </view>
+  </view>
+
+  <!-- 勋章统计 -->
+  <view class="stats-bar">
+    <view class="stats-item">
+      <text class="stats-num">{{totalMedals}}</text>
+      <text class="stats-label">已获得</text>
+    </view>
+    <view class="stats-divider"></view>
+    <view class="stats-item">
+      <text class="stats-num">{{lockedMedals}}</text>
+      <text class="stats-label">未解锁</text>
+    </view>
+  </view>
+
+  <!-- 勋章列表 -->
+  <view class="medals-grid">
+    <view 
+      class="medal-item {{item.unlocked ? '' : 'locked'}}" 
+      wx:for="{{medals}}" 
+      wx:key="id"
+      bindtap="showMedalDetail"
+      data-medal="{{item}}"
+    >
+      <view class="medal-icon-wrap">
+        <image 
+          class="medal-icon" 
+          src="{{item.unlocked ? item.icon : '/images/medals/lock.png'}}" 
+          mode="aspectFit"
+        ></image>
+        <view class="medal-glow" wx:if="{{item.unlocked && item.isNew}}"></view>
+      </view>
+      <text class="medal-name">{{item.name}}</text>
+      <text class="medal-desc">{{item.unlocked ? item.condition : '解锁条件：' + item.condition}}</text>
+    </view>
+  </view>
+
+  <!-- 勋章详情弹窗 -->
+  <view class="detail-modal" wx:if="{{showDetail}}" bindtap="closeDetail">
+    <view class="detail-content" catchtap="preventBubble">
+      <image class="detail-icon" src="{{currentMedal.icon}}" mode="aspectFit"></image>
+      <text class="detail-name">{{currentMedal.name}}</text>
+      <text class="detail-desc">{{currentMedal.description}}</text>
+      <view class="detail-condition">
+        <text class="condition-label">获得条件</text>
+        <text class="condition-text">{{currentMedal.condition}}</text>
+      </view>
+      <view class="detail-progress" wx:if="{{!currentMedal.unlocked}}">
+        <view class="progress-bar">
+          <view class="progress-fill" style="width: {{currentMedal.progress}}%"></view>
+        </view>
+        <text class="progress-text">{{currentMedal.progress}}%</text>
+      </view>
+      <view class="detail-time" wx:if="{{currentMedal.unlocked}}">
+        <text>获得时间：{{currentMedal.unlockedTime}}</text>
+      </view>
+      <view class="detail-close" bindtap="closeDetail">
+        <text>知道了</text>
+      </view>
+    </view>
+  </view>
+</view>

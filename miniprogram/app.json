@@ -15,7 +15,9 @@
     "pages/test/result",
     "pages/error/index",
     "pages/point/index",
-    "pages/user/index"
+    "pages/user/index",
+    "pages/medals/index",
+    "pages/settings/index"
   ],
   "tabBar": {
     "color": "#999999",
