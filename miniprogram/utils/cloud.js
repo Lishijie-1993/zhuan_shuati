@@ -49,59 +49,59 @@ class CloudService {
 
   // 获取用户信息
   async getUserInfo() {
-    return await this.call('auth.getUserInfo');
+    return await this.call('getUserInfo');
   }
 
   // ========== 刷题相关 ==========
 
   // 获取题目列表
   async getQuestions(chapter, mode, page = 1, limit = 10) {
-    return await this.call('quiz.getQuestions', { chapter, mode, page, limit });
+    return await this.call('getQuestions', { chapter, mode, page, limit });
   }
 
   // 同步刷题进度
   async syncProgress(chapter, currentIndex, correctCount) {
-    return await this.call('quiz.syncProgress', { chapter, currentIndex, correctCount });
+    return await this.call('syncProgress', { chapter, currentIndex, correctCount });
   }
 
   // ========== 收藏相关 ==========
 
   // 切换收藏
   async toggleFavorite(questionId, action) {
-    return await this.call('fav.toggle', { questionId, action });
+    return await this.call('toggle', { questionId, action });
   }
 
   // ========== 错题相关 ==========
 
   // 报告错题
   async reportError(questionId, wrongOption) {
-    return await this.call('error.report', { questionId, wrongOption });
+    return await this.call('report', { questionId, wrongOption });
   }
 
   // ========== 考试相关 ==========
 
   // 开始考试
   async startPaper(paperId) {
-    return await this.call('exam.startPaper', { paperId });
+    return await this.call('startPaper', { paperId });
   }
 
   // 提交试卷
   async submitPaper(snapshotId, answers, timeUsed) {
-    return await this.call('exam.submitPaper', { snapshotId, answers, timeUsed });
+    return await this.call('submitPaper', { snapshotId, answers, timeUsed });
   }
 
   // ========== 排行榜相关 ==========
 
   // 获取排行榜
   async getLeaderboard(tab = 'total', page = 1) {
-    return await this.call('rank.getLeaderboard', { tab, page });
+    return await this.call('getLeaderboard', { tab, page });
   }
 
   // ========== 资讯相关 ==========
 
   // 获取资讯列表
   async getNewsList(tag, keyword, page = 1) {
-    return await this.call('news.list', { tag, keyword, page });
+    return await this.call('list', { tag, keyword, page });
   }
 }
 
