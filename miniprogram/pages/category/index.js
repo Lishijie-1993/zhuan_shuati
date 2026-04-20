@@ -54,6 +54,12 @@ Page({
           }
         ]
     },
+    startQuiz(e) {
+      const title = e.currentTarget.dataset.title;
+      wx.navigateTo({
+          url: `/pages/quiz/index?title=${encodeURIComponent(title)}`
+      });
+  },
     switchCategory(e) {
         this.setData({activeCategory: e.currentTarget.dataset.index});
     }

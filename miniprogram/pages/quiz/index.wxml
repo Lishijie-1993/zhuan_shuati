@@ -1,0 +1,81 @@
+<view class="container">
+  <view class="header">
+    <view class="back-icon" bindtap="goBack">〈</view>
+    <text class="chapter-name">{{chapterTitle}}</text>
+  </view>
+
+  <view class="mode-switch">
+    <view class="switch-container">
+      <view class="mode-item {{mode === 'answer' ? 'active' : ''}}" bindtap="switchMode" data-mode="answer">答题模式</view>
+      <view class="mode-item {{mode === 'recite' ? 'active' : ''}}" bindtap="switchMode" data-mode="recite">背题模式</view>
+    </view>
+    <text class="auto-next" bindtap="toggleAutoNext">{{isAutoNext ? '自动' : '手动'}}</text>
+  </view>
+
+  <scroll-view class="quiz-content" scroll-y>
+    <view class="question-info">
+      <text class="q-number">第{{currentIndex + 1}}题</text>
+      <view class="q-type-tag">单选题</view>
+    </view>
+
+    <view class="question-text">
+      根据矿床充水主要含水层的类型，将固体矿床划分为以孔隙含水层为主的充水矿床、以裂隙含水层为主的充水矿床和以岩溶含水层为主的充水矿床。下列选项中属于构造裂隙含水层型矿坑涌水特点的是（ ）。
+    </view>
+
+    <view class="options-list">
+      <view 
+        class="option-item {{ (mode === 'recite' && item.id === correctAnswer) || (mode === 'answer' && userAnswer === item.id && item.id === correctAnswer) ? 'active-correct' : '' }} {{ mode === 'answer' && userAnswer === item.id && item.id !== correctAnswer ? 'active-error' : '' }}" 
+        wx:for="{{options}}" 
+        wx:key="id"
+        bindtap="selectOption"
+        data-id="{{item.id}}"
+      >
+        <text class="option-label">{{item.id}}. {{item.text}}</text>
+        
+        <icon wx:if="{{ (mode === 'recite' && item.id === correctAnswer) || (mode === 'answer' && userAnswer === item.id && item.id === correctAnswer) }}" type="success" size="18" color="#07C160"></icon>
+        
+        <icon wx:if="{{ mode === 'answer' && userAnswer === item.id && item.id !== correctAnswer }}" type="warn" size="18" color="#FA5151"></icon>
+      </view>
+    </view>
+
+    <view class="swipe-tip">
+      左右滑动可切换上下题{{isAutoNext ? '，答对自动下一题' : ''}}
+    </view>
+
+    <view class="analysis-box" wx:if="{{mode === 'recite' || userAnswer}}">
+      <view class="analysis-header">
+        <text class="analysis-title">试题解析</text>
+        <text class="analysis-error" bindtap="onReportError">纠错</text>
+      </view>
+      <view class="analysis-body">
+        <view class="correct-answer-row">
+          正确答案：<text class="blue-text">{{correctAnswer}}</text>
+        </view>
+        <view class="ai-tag">✦ AI智能解析，仅供参考</view>
+        <text class="analysis-detail">{{analysisText}}</text>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="footer-actions">
+    <view class="action-item" bindtap="prevQuestion">
+      <image src="/images/icons/back.png" class="action-icon"></image>
+      <text>上一题</text>
+    </view>
+    <view class="action-item" bindtap="onAnalysis">
+      <image src="/images/icons/notes2.png" class="action-icon"></image>
+      <text>解析</text>
+    </view>
+    <view class="action-item center">
+      <text class="progress-text">{{currentIndex + 1}}/{{totalQuestions}}</text>
+    </view>
+    <view class="action-item" bindtap="onFavorite">
+      <image src="/images/icons/favorite2.png" class="action-icon"></image>
+      <text>收藏</text>
+    </view>
+    <view class="action-item" bindtap="nextQuestion">
+      <image src="/images/icons/next.png" class="action-icon"></image>
+      <text>下一题</text>
+    </view>
+  </view>
+</view>
