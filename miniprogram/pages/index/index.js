@@ -16,6 +16,8 @@ Page({
     const name = e.currentTarget.dataset.name;
     if (name === '专项刷题') {
       wx.navigateTo({ url: '/pages/category/index' });
+    } else if (name === '题型刷题') {
+      wx.navigateTo({ url: '/pages/type/index' }); // 跳转至题型刷题
     } else {
       wx.showToast({ title: '功能开发中', icon: 'none' });
     }
