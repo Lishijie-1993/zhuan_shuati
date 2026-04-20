@@ -9,7 +9,10 @@
     "pages/rank/index",
     "pages/random/index",
     "pages/test/index",
+    "pages/test/exam",
+    "pages/test/result",
     "pages/error/index",
+    "pages/point/index",
     "pages/user/index"
   ],
   "tabBar": {

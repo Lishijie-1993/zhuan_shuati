@@ -1,0 +1,51 @@
+<view class="container">
+  <view class="status-bar">
+    <view class="progress">
+      <text class="current">{{currentIndex + 1}}</text>
+      <text class="total">/{{questions.length}}</text>
+    </view>
+    <view class="timer {{timeLeft < 300 ? 'danger' : ''}}">
+      <image class="icon-clock" src="/images/icons/clock.png"></image>
+      <text>{{timerText}}</text>
+    </view>
+  </view>
+
+  <view class="question-card">
+    <view class="q-header">
+      <text class="q-type">{{questions[currentIndex].type === 'single' ? '单选题' : (questions[currentIndex].type === 'multiple' ? '多选题' : '判断题')}}</text>
+      <text class="q-score">分值：1分</text>
+    </view>
+    
+    <view class="q-title">{{questions[currentIndex].title}}</view>
+
+    <view class="options-group">
+      <view 
+        wx:for="{{questions[currentIndex].options}}" 
+        wx:key="key" 
+        class="option-item {{helper.isSelected(userAnswers[questions[currentIndex].id], item.key) ? 'selected' : ''}}"
+        bindtap="selectOption"
+        data-key="{{item.key}}"
+      >
+        <view class="option-label">{{item.key}}</view>
+        <view class="option-content">{{item.content}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="footer">
+    <button class="btn-nav" bindtap="prevQuestion" disabled="{{currentIndex === 0}}">上一题</button>
+    
+    <button wx:if="{{currentIndex === questions.length - 1}}" class="btn-submit" bindtap="submitExam">提交试卷</button>
+    <button wx:else class="btn-nav primary" bindtap="nextQuestion">下一题</button>
+  </view>
+</view>
+
+<wxs module="helper">
+  module.exports = {
+    isSelected: function(userAns, key) {
+      if (!userAns) return false;
+      if (typeof userAns === 'string') return userAns === key;
+      return userAns.indexOf(key) > -1;
+    }
+  }
+</wxs>

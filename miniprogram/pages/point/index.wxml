@@ -1,0 +1,47 @@
+<view class="container">
+  
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-content">
+      <view class="back-btn" bindtap="goBack">
+        <text class="back-icon">〈</text>
+        <text>首页</text>
+      </view>
+      <view class="nav-title">刷知识点</view>
+    </view>
+  </view>
+
+  <view class="search-section">
+    <view class="search-bar">
+      <icon type="search" size="16"></icon>
+      <input placeholder="搜索知识点..." disabled />
+    </view>
+  </view>
+
+  <scroll-view scroll-y class="content-scroll">
+    
+    <block wx:if="{{knowledgeList.length === 0}}">
+      <view class="placeholder-card" wx:for="{{5}}" wx:key="index">
+        <view class="placeholder-title"></view>
+        <view class="placeholder-desc"></view>
+        <view class="placeholder-btn"></view>
+      </view>
+      
+      <view class="empty-tip">
+        <text>数据加载中或暂无内容...</text>
+      </view>
+    </block>
+
+    <block wx:else>
+      <view class="point-card" wx:for="{{knowledgeList}}" wx:key="id">
+        <view class="card-left">
+          <text class="title">{{item.title}}</text>
+          <text class="desc">{{item.summary}}</text>
+        </view>
+        <view class="card-right">
+          <button class="learn-btn" size="mini">点击阅读</button>
+        </view>
+      </view>
+    </block>
+
+  </scroll-view>
+</view>

@@ -53,7 +53,17 @@ Page({
     } else if (name === '考试记录') {
       // 如果有历史记录页，跳转至此
       wx.navigateTo({ url: '/pages/history/index' });
-    } else {
+    } else if (name === '刷知识点') {
+      wx.navigateTo({ 
+        url: '/pages/point/index', // 跳转到我们刚才写好的知识点页面
+        fail: (err) => {
+          console.error('跳转失败：', err);
+          wx.showToast({ title: '页面路径未配置', icon: 'none' });
+        }
+      });
+    } 
+    // -----------------------
+    else {
       wx.showToast({ title: '功能开发中', icon: 'none' });
     }
   },

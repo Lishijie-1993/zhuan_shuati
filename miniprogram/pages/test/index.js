@@ -16,7 +16,7 @@ Page({
   startExam(e) {
     const paperId = e.currentTarget.dataset.id;
     wx.navigateTo({
-      url: `/pages/question/index?id=${paperId}&type=exam`
+      url: `/pages/test/exam?id=${paperId}`
     });
   }
 });

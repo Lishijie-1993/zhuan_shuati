@@ -1,0 +1,165 @@
+/* pages/point/index.wxss */
+.container {
+  background-color: #f7f8fa;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==========================================================================
+   1. 自定义顶部导航栏 
+   ========================================================================== */
+.custom-nav {
+  background-color: #ffffff;
+  position: sticky; /* 固定在顶部 */
+  top: 0;
+  z-index: 1000;
+  width: 100%;
+  border-bottom: 1rpx solid #f1f2f6;
+}
+
+.nav-content {
+  height: 88rpx; /* 标准胶囊按钮高度 */
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding: 0 30rpx;
+}
+
+/* 返回按钮 */
+.back-btn {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding-right: 30rpx;
+  position: absolute;
+  left: 30rpx;
+  z-index: 1001;
+}
+
+.back-icon {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #1e90ff; /* 使用统一的蓝色调 */
+  margin-right: 8rpx;
+}
+
+.back-btn text:last-child {
+  font-size: 30rpx;
+  color: #1e90ff;
+}
+
+/* 页面标题 */
+.nav-title {
+  width: 100%;
+  text-align: center;
+  font-size: 34rpx;
+  font-weight: bold;
+  color: #2f3542;
+}
+
+/* ==========================================================================
+   2. 搜索栏样式 
+   ========================================================================== */
+.search-section {
+  padding: 20rpx 30rpx;
+  background-color: #ffffff;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  background-color: #f1f2f6;
+  padding: 15rpx 25rpx;
+  border-radius: 40rpx;
+}
+
+.search-bar input {
+  margin-left: 15rpx;
+  font-size: 28rpx;
+  color: #a4b0be;
+}
+
+/* ==========================================================================
+   3. 列表区域 
+   ========================================================================== */
+.content-scroll {
+  flex: 1;
+  padding: 20rpx 0;
+}
+
+/* 知识点卡片样式 */
+.point-card, .placeholder-card {
+  background-color: #ffffff;
+  margin: 0 30rpx 20rpx;
+  padding: 30rpx;
+  border-radius: 16rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.05);
+}
+
+.card-left {
+  flex: 1;
+  margin-right: 20rpx;
+}
+
+.title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #2f3542;
+  margin-bottom: 10rpx;
+}
+
+.desc {
+  font-size: 26rpx;
+  color: #747d8c;
+}
+
+.learn-btn {
+  background-color: #1e90ff !important;
+  color: white !important;
+  border-radius: 30rpx;
+  font-weight: normal;
+  padding: 10rpx 24rpx;
+}
+
+/* ==========================================================================
+   4. 骨架屏动画与提示 
+   ========================================================================== */
+.placeholder-title, .placeholder-desc, .placeholder-btn {
+  background: linear-gradient(90deg, #f2f2f2 25%, #e6e6e6 37%, #f2f2f2 63%);
+  background-size: 400% 100%;
+  animation: loading 1.4s ease infinite;
+}
+
+.placeholder-title {
+  height: 32rpx;
+  width: 60%;
+  margin-bottom: 20rpx;
+}
+
+.placeholder-desc {
+  height: 24rpx;
+  width: 90%;
+}
+
+.placeholder-btn {
+  width: 120rpx;
+  height: 50rpx;
+  border-radius: 25rpx;
+}
+
+.empty-tip {
+  text-align: center;
+  color: #ced4da;
+  font-size: 26rpx;
+  margin-top: 50rpx;
+}
+
+@keyframes loading {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
