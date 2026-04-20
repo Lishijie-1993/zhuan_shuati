@@ -10,6 +10,7 @@ Page({
     totalQuestions: 164,
     correctAnswer: 'C', // 当前题目的正确答案
     userAnswer: null, // 用户在答题模式下选择的答案
+    isFavorited: false, // 当前题目是否已收藏
     analysisText: '裂隙水赋存于岩石裂隙中的地下水，其特点正是水量一般不大，但水压往往较大。当裂隙水与其他水源没有水力联系时，由于缺乏水源补给，其涌水量会逐渐减少，乃至疏干。相反，如果与其他水源存在水力联系，涌水量则会因得到补给而逐步增加，这种情况容易导致突水事故的发生。因此，题目描述的特点与裂隙水完全相符。',
     options: [
       { id: 'A', text: '涌水量介于100~500m³/h' },
@@ -33,6 +34,19 @@ Page({
         title: decodedTitle
       });
     }
+    // 页面加载时检查当前题目收藏状态
+    this.checkFavoriteStatus();
+  },
+
+  /**
+   * 检查当前题目的收藏状态
+   */
+  checkFavoriteStatus() {
+    const favorites = wx.getStorageSync('my_favorites') || [];
+    // 使用“章节名+索引”作为临时唯一ID，实际开发建议使用题目本身的唯一ID
+    const questionId = `${this.data.chapterTitle}_${this.data.currentIndex}`;
+    const isFavorited = favorites.some(item => item.id === questionId);
+    this.setData({ isFavorited });
   },
 
   /**
@@ -98,8 +112,10 @@ Page({
       this.setData({
         currentIndex: this.data.currentIndex - 1,
         userAnswer: null // 切换题目重置用户答案
+      }, () => {
+        // 切换题目后重新检查收藏状态
+        this.checkFavoriteStatus();
       });
-      // 此处后续可加入根据 currentIndex 从数据库加载新题目的逻辑
     } else {
       wx.showToast({
         title: '已经是第一题了',
@@ -126,10 +142,33 @@ Page({
    * 底部操作：收藏题目
    */
   onFavorite() {
-    wx.showToast({
-      title: '已加入收藏',
-      icon: 'success'
-    });
+    let favorites = wx.getStorageSync('my_favorites') || [];
+    const questionId = `${this.data.chapterTitle}_${this.data.currentIndex}`;
+    const isNowFavorited = !this.data.isFavorited;
+
+    if (isNowFavorited) {
+      // 执行收藏：构造题目对象并存入缓存
+      const favoriteItem = {
+        id: questionId,
+        chapterTitle: this.data.chapterTitle,
+        currentIndex: this.data.currentIndex,
+        options: this.data.options,
+        correctAnswer: this.data.correctAnswer,
+        analysisText: this.data.analysisText,
+        // 这里可以保存题目文本，如果你的data里有questionText的话
+        questionText: '根据矿床充水主要含水层的类型，将固体矿床划分为以孔隙含水层为主的充水矿床、以裂隙含水层为主的充水矿床和以岩溶含水层为主的充水矿床。下列选项中属于构造裂隙含水层型矿坑涌水特点的是（ ）。' 
+      };
+      favorites.push(favoriteItem);
+      wx.showToast({ title: '已加入收藏', icon: 'success' });
+    } else {
+      // 取消收藏：从数组中移除
+      favorites = favorites.filter(item => item.id !== questionId);
+      wx.showToast({ title: '已取消收藏', icon: 'none' });
+    }
+
+    // 更新缓存和页面状态
+    wx.setStorageSync('my_favorites', favorites);
+    this.setData({ isFavorited: isNowFavorited });
   },
 
   /**
@@ -140,8 +179,10 @@ Page({
       this.setData({
         currentIndex: this.data.currentIndex + 1,
         userAnswer: null // 切换题目重置用户答案
+      }, () => {
+        // 切换题目后重新检查收藏状态
+        this.checkFavoriteStatus();
       });
-      // 此处后续可加入根据 currentIndex 从数据库加载新题目的逻辑
     } else {
       wx.showToast({
         title: '已经是最后一题了',

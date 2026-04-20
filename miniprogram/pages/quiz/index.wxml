@@ -69,10 +69,12 @@
     <view class="action-item center">
       <text class="progress-text">{{currentIndex + 1}}/{{totalQuestions}}</text>
     </view>
+    
     <view class="action-item" bindtap="onFavorite">
-      <image src="/images/icons/favorite2.png" class="action-icon"></image>
-      <text>收藏</text>
+      <image src="{{isFavorited ? '/images/icons/favorite.png' : '/images/icons/favorite2.png'}}" class="action-icon"></image>
+      <text style="{{isFavorited ? 'color: #ff9800;' : ''}}">{{isFavorited ? '已收藏' : '收藏'}}</text>
     </view>
+
     <view class="action-item" bindtap="nextQuestion">
       <image src="/images/icons/next.png" class="action-icon"></image>
       <text>下一题</text>

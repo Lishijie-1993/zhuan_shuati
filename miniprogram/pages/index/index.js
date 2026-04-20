@@ -1,4 +1,7 @@
 Page({
+  /**
+   * 页面的初始数据
+   */
   data: {
     menus: [
       { name: '专项刷题', icon: '/images/icons/chapter.png', bgColor: '#EEF3FF' },
@@ -12,22 +15,40 @@ Page({
     ]
   },
 
+  /**
+   * 菜单点击事件处理
+   */
   onMenuClick(e) {
     const name = e.currentTarget.dataset.name;
+    
     if (name === '专项刷题') {
       wx.navigateTo({ url: '/pages/category/index' });
     } else if (name === '题型刷题') {
       wx.navigateTo({ url: '/pages/type/index' }); // 跳转至题型刷题
+    } else if (name === '我的收藏') {
+      // 跳转至“我的收藏”页面
+      wx.navigateTo({ 
+        url: '/pages/favorite/index',
+        fail: () => {
+          wx.showToast({ title: '请先创建收藏页面', icon: 'none' });
+        }
+      });
     } else {
       wx.showToast({ title: '功能开发中', icon: 'none' });
     }
   },
 
+  /**
+   * 开始刷题点击事件
+   */
   startQuiz() {
     // 跳转至默认的开始刷题页面
     wx.showToast({ title: '准备开始练习', icon: 'none' });
   },
 
+  /**
+   * 模拟考试点击事件
+   */
   toExam() {
     // 跳转至模拟考试页面
     wx.showToast({ title: '正在进入模拟考试', icon: 'none' });
