@@ -1,24 +1,49 @@
 Page({
   data: {
-    favorites: [],      // 题目数据源
+    favorites: [],
     currentIndex: 0,
     mode: 'answer',
     isAutoNext: false,
-    userAnswers: {},     // 记录用户答案，键为题目 ID
-    showAnalysisMap: {}, // 记录解析显示状态，键为题目 ID
+    userAnswers: {},
+    showAnalysisMap: {},
   },
 
   onShow() {
-    // 从缓存读取数据
-    const list = wx.getStorageSync('my_favorites') || [];
-    // 【修改点1】确保调用了 setData 且键名为 favorites，界面才会刷新
-    this.setData({ 
-      favorites: list,
-      currentIndex: 0, // 每次进入页面重置到第一题
-      userAnswers: {},
-      showAnalysisMap: {}
-    });
-    wx.setNavigationBarTitle({ title: '我的收藏' });
+    console.log('📦 收藏页 onShow 执行');
+    try {
+      const list = wx.getStorageSync('my_favorites') || [];
+      console.log('📋 读取到的收藏数据:', list);
+      console.log('📊 收藏数量:', list.length);
+      
+      // 调试：检查每条收藏数据的完整性
+      if (list.length > 0) {
+        console.log('🔍 第一条收藏数据:', JSON.stringify(list[0], null, 2));
+        console.log('🔍 字段检查 - id:', list[0].id);
+        console.log('🔍 字段检查 - questionText:', list[0].questionText);
+        console.log('🔍 字段检查 - options:', list[0].options);
+      }
+      
+      // 确保数据格式正确（兼容旧数据）
+      const formattedList = list.map(item => ({
+        id: item.id || `fallback_${Math.random()}`,
+        chapterTitle: item.chapterTitle || '',
+        questionText: item.questionText || item.currentQuestionText || '题目内容加载中...',
+        options: item.options || [],
+        correctAnswer: item.correctAnswer || '',
+        analysisText: item.analysisText || '暂无解析'
+      }));
+      
+      this.setData({ 
+        favorites: formattedList,
+        currentIndex: 0,
+        userAnswers: {},
+        showAnalysisMap: {}
+      });
+      
+      wx.setNavigationBarTitle({ title: '我的收藏' });
+    } catch (e) {
+      console.error('❌ 读取收藏失败:', e);
+    }
   },
 
   onSwiperChange(e) {
@@ -46,27 +71,27 @@ Page({
     
     if (this.data.mode === 'recite' || this.data.userAnswers[qId]) return;
 
-    const userAnswers = this.data.userAnswers;
-    userAnswers[qId] = optId; 
+    const userAnswers = { ...this.data.userAnswers, [qId]: optId };
     this.setData({ userAnswers });
 
     if (this.data.isAutoNext && optId === currentQuestion.correctAnswer) {
       if (index < this.data.favorites.length - 1) {
-        setTimeout(() => { this.setData({ currentIndex: index + 1 }); }, 800);
+        setTimeout(() => { 
+          this.setData({ currentIndex: index + 1 }); 
+        }, 800);
       }
     }
   },
 
   onFavorite() {
     const index = this.data.currentIndex;
-    let list = [...this.data.favorites]; // 使用展开运算符深拷贝
+    let list = [...this.data.favorites];
     
     if (list.length === 0) return;
 
     list.splice(index, 1);
     wx.setStorageSync('my_favorites', list);
     
-    // 【修改点1】移除题目后立即 setData 更新视图
     this.setData({ favorites: list });
     
     if (this.data.currentIndex >= list.length && list.length > 0) {
@@ -91,8 +116,7 @@ Page({
   onAnalysis() {
     if (this.data.favorites.length === 0) return;
     const currentQ = this.data.favorites[this.data.currentIndex];
-    const showAnalysisMap = this.data.showAnalysisMap;
-    showAnalysisMap[currentQ.id] = true;
+    const showAnalysisMap = { ...this.data.showAnalysisMap, [currentQ.id]: true };
     this.setData({ showAnalysisMap });
   },
 

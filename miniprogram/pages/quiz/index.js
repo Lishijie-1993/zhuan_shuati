@@ -17,7 +17,9 @@ Page({
       { id: 'B', text: '水压大，水量丰富，一般为500~1000m³/h' },
       { id: 'C', text: '静储量大，动储量小，一般为80~500m³/h' },
       { id: 'D', text: '以静储量为主，动储量变化范围大，可由每小时10m³至数万立方米' }
-    ]
+    ],
+    // ✅ 新增：当前题目的完整文本（用于收藏时保存）
+    currentQuestionText: '根据矿床充水主要含水层的类型，将固体矿床划分为以孔隙含水层为主的充水矿床、以裂隙含水层为主的充水矿床和以岩溶含水层为主的充水矿床。下列选项中属于构造裂隙含水层型矿坑涌水特点的是（ ）。'
   },
 
   /**
@@ -39,14 +41,27 @@ Page({
   },
 
   /**
+   * 生命周期函数--监听页面显示（✅ 关键：确保从收藏页返回时能刷新状态）
+   */
+  onShow() {
+    // 每次页面显示时重新检查收藏状态，避免缓存不一致
+    this.checkFavoriteStatus();
+  },
+
+  /**
    * 检查当前题目的收藏状态
    */
   checkFavoriteStatus() {
-    const favorites = wx.getStorageSync('my_favorites') || [];
-    // 使用“章节名+索引”作为临时唯一ID，实际开发建议使用题目本身的唯一ID
-    const questionId = `${this.data.chapterTitle}_${this.data.currentIndex}`;
-    const isFavorited = favorites.some(item => item.id === questionId);
-    this.setData({ isFavorited });
+    try {
+      const favorites = wx.getStorageSync('my_favorites') || [];
+      // 使用"章节名+索引"作为临时唯一ID，实际开发建议使用题目本身的唯一ID
+      const questionId = `${this.data.chapterTitle}_${this.data.currentIndex}`;
+      const isFavorited = favorites.some(item => item.id === questionId);
+      this.setData({ isFavorited });
+    } catch (e) {
+      console.error('读取收藏状态失败:', e);
+      this.setData({ isFavorited: false });
+    }
   },
 
   /**
@@ -139,36 +154,54 @@ Page({
   },
 
   /**
-   * 底部操作：收藏题目
+   * 底部操作：收藏/取消收藏题目 ✅ 核心修复
    */
   onFavorite() {
-    let favorites = wx.getStorageSync('my_favorites') || [];
-    const questionId = `${this.data.chapterTitle}_${this.data.currentIndex}`;
-    const isNowFavorited = !this.data.isFavorited;
+    try {
+      // ✅ 统一使用 'my_favorites' 作为 Storage Key
+      let favorites = wx.getStorageSync('my_favorites') || [];
+      const questionId = `${this.data.chapterTitle}_${this.data.currentIndex}`;
+      const isNowFavorited = !this.data.isFavorited;
 
-    if (isNowFavorited) {
-      // 执行收藏：构造题目对象并存入缓存
-      const favoriteItem = {
-        id: questionId,
-        chapterTitle: this.data.chapterTitle,
-        currentIndex: this.data.currentIndex,
-        options: this.data.options,
-        correctAnswer: this.data.correctAnswer,
-        analysisText: this.data.analysisText,
-        // 这里可以保存题目文本，如果你的data里有questionText的话
-        questionText: '根据矿床充水主要含水层的类型，将固体矿床划分为以孔隙含水层为主的充水矿床、以裂隙含水层为主的充水矿床和以岩溶含水层为主的充水矿床。下列选项中属于构造裂隙含水层型矿坑涌水特点的是（ ）。' 
-      };
-      favorites.push(favoriteItem);
-      wx.showToast({ title: '已加入收藏', icon: 'success' });
-    } else {
-      // 取消收藏：从数组中移除
-      favorites = favorites.filter(item => item.id !== questionId);
-      wx.showToast({ title: '已取消收藏', icon: 'none' });
+      if (isNowFavorited) {
+        // ✅ 执行收藏：构造完整题目对象（确保收藏页能正常渲染）
+        const favoriteItem = {
+          id: questionId,                          // ✅ 唯一标识（用于去重和查找）
+          chapterTitle: this.data.chapterTitle,    // ✅ 章节标题
+          questionText: this.data.currentQuestionText || this.data.options[0]?.text || '', // ✅ 题目文本（收藏页WXML依赖此字段）
+          options: this.data.options,              // ✅ 选项数组（收藏页渲染选项依赖）
+          correctAnswer: this.data.correctAnswer,  // ✅ 正确答案
+          analysisText: this.data.analysisText || '暂无解析', // ✅ 解析文本
+          timestamp: Date.now()                    // ✅ 收藏时间（可选，便于排序）
+        };
+        
+        // ✅ 防止重复收藏（双重保险）
+        const exists = favorites.some(item => item.id === questionId);
+        if (!exists) {
+          favorites.push(favoriteItem);
+          wx.setStorageSync('my_favorites', favorites);
+          wx.showToast({ title: '收藏成功', icon: 'success' });
+        } else {
+          wx.showToast({ title: '已收藏过该题', icon: 'none' });
+        }
+      } else {
+        // ✅ 取消收藏：从数组中移除
+        const beforeLength = favorites.length;
+        favorites = favorites.filter(item => item.id !== questionId);
+        
+        if (favorites.length < beforeLength) {
+          wx.setStorageSync('my_favorites', favorites);
+          wx.showToast({ title: '已取消收藏', icon: 'none' });
+        }
+      }
+
+      // ✅ 更新页面收藏按钮状态
+      this.setData({ isFavorited: isNowFavorited });
+      
+    } catch (e) {
+      console.error('收藏操作失败:', e);
+      wx.showToast({ title: '操作失败，请重试', icon: 'none' });
     }
-
-    // 更新缓存和页面状态
-    wx.setStorageSync('my_favorites', favorites);
-    this.setData({ isFavorited: isNowFavorited });
   },
 
   /**
