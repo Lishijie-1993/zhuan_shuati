@@ -146,6 +146,11 @@ Page({
   },
 
   goBack() {
-    wx.navigateBack();
+    const pages = getCurrentPages();
+    if (pages.length > 1) {
+      wx.navigateBack({ delta: 1 });
+    } else {
+      wx.switchTab({ url: '/pages/index/index' });
+    }
   }
 });

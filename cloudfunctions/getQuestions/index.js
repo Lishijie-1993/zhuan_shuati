@@ -1,4 +1,4 @@
-// cloudfunctions/quiz/getQuestions/index.js
+// cloudfunctions/getQuestions/index.js
 const cloud = require('wx-server-sdk');
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
@@ -21,17 +21,41 @@ exports.main = async (event, context) => {
       }
     } else if (mode === 'random') {
       // 乱序模式：随机获取题目
-      query = {}; // 不限制章节
+      query = {};
     } else if (mode === 'error') {
-      // 错题模式：获取用户的错题
-      const errorRes = await db.collection('user_errors').where({
-        user_id: openid
-      }).get();
-      const errorQuestionIds = errorRes.data.map(e => e.question_id);
+      // 错题模式：支持分页获取用户的错题
+      // 通过循环分页分批次拉取（每批100条）直到拉完所有错题ID
+      const errorQuestionIds = await fetchAllErrorIds(openid);
+      
+      const total = errorQuestionIds.length;
+      const skip = (page - 1) * limit;
+      const pageIds = errorQuestionIds.slice(skip, skip + limit);
+      
+      if (pageIds.length === 0) {
+        return {
+          list: [],
+          total,
+          hasNext: false
+        };
+      }
+
+      // 根据错题ID获取题目详情
+      const questionsRes = await db.collection('question_bank')
+        .where({
+          _id: db.command.in(pageIds)
+        })
+        .get();
+
+      // 保持原有顺序
+      const list = pageIds
+        .map(id => questionsRes.data.find(q => q._id === id))
+        .filter(q => q)
+        .map(q => formatQuestion(q));
+
       return {
-        list: [],
-        total: errorQuestionIds.length,
-        hasNext: false
+        list,
+        total,
+        hasNext: skip + list.length < total
       };
     }
 
@@ -41,7 +65,6 @@ exports.main = async (event, context) => {
 
     // 分页查询
     const skip = (page - 1) * limit;
-    let questionsQuery = db.collection('question_bank').where(query);
     
     if (mode === 'random') {
       // 乱序模式使用 aggregate + sample
@@ -56,7 +79,8 @@ exports.main = async (event, context) => {
         hasNext: page * limit < total
       };
     } else {
-      const questionsRes = await questionsQuery
+      const questionsRes = await db.collection('question_bank')
+        .where(query)
         .skip(skip)
         .limit(limit)
         .get();
@@ -78,6 +102,34 @@ exports.main = async (event, context) => {
     };
   }
 };
+
+// 分批获取所有错题ID（解决100条限制）
+async function fetchAllErrorIds(openid) {
+  const BATCH_SIZE = 100;
+  const allIds = [];
+  let skip = 0;
+  let hasMore = true;
+
+  while (hasMore) {
+    const res = await db.collection('user_errors')
+      .where({ user_id: openid })
+      .orderBy('last_wrong_time', 'desc')
+      .skip(skip)
+      .limit(BATCH_SIZE)
+      .get();
+
+    const ids = res.data.map(e => e.question_id);
+    allIds.push(...ids);
+
+    if (ids.length < BATCH_SIZE) {
+      hasMore = false;
+    } else {
+      skip += BATCH_SIZE;
+    }
+  }
+
+  return allIds;
+}
 
 // 格式化题目数据
 function formatQuestion(q) {

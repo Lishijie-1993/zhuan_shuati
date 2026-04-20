@@ -18,3 +18,8 @@ yarn-error.log*
 cloudfunctions/common/
 # 忽略环境配置文件
 miniprogram/envConfig.js
+.tmp.driveupload/
+*.gdoc
+project.private.config.json
+**/node_modules/
+miniprogram_npm/

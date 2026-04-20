@@ -28,7 +28,14 @@ Page({
     this.refreshPageData(this.data.selectedIndustry);
   },
 
-  goBack() { wx.navigateBack({ delta: 1 }); },
+  goBack() {
+    const pages = getCurrentPages();
+    if (pages.length > 1) {
+      wx.navigateBack({ delta: 1 });
+    } else {
+      wx.switchTab({ url: '/pages/index/index' });
+    }
+  },
 
   openPicker() {
     const currentIndex = this.data.industryOptions.indexOf(this.data.selectedIndustry);

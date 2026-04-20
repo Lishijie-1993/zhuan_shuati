@@ -1,8 +1,9 @@
-// cloudfunctions/rank/getLeaderboard/index.js
+// cloudfunctions/getLeaderboard/index.js
 const cloud = require('wx-server-sdk');
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
+const _ = db.command;
 
 exports.main = async (event, context) => {
   const { tab = 'total', page = 1 } = event;
@@ -21,20 +22,12 @@ exports.main = async (event, context) => {
       sortField = 'today_questions';
     }
 
-    // 获取排行榜数据
+    // 获取排行榜数据（分页）
     const rankRes = await db.collection('users')
       .orderBy(sortField, 'desc')
       .skip(skip)
       .limit(pageSize)
       .get();
-
-    // 获取当前用户的排名
-    const myRankRes = await db.collection('users')
-      .orderBy(sortField, 'desc')
-      .get();
-
-    const myRankIndex = myRankRes.data.findIndex(u => u._openid === openid);
-    const myRank = myRankIndex >= 0 ? myRankIndex + 1 : null;
 
     // 获取当前用户信息
     const myUserRes = await db.collection('users').where({
@@ -42,6 +35,17 @@ exports.main = async (event, context) => {
     }).get();
 
     const myUser = myUserRes.data[0] || {};
+    const myScore = myUser[sortField] || 0;
+
+    // 计算当前用户排名：统计分数高于当前用户的用户数 + 1
+    // 这样避免了拉取全量数据的 100 条限制
+    const higherCountRes = await db.collection('users')
+      .where({
+        [sortField]: _.gt(myScore)
+      })
+      .count();
+
+    const myRank = higherCountRes.total + 1;
 
     const list = rankRes.data.map((user, index) => ({
       rank: skip + index + 1,
@@ -56,22 +60,25 @@ exports.main = async (event, context) => {
     }));
 
     // 构建我的排名信息
-    const myRankInfo = myRank ? {
+    const myRankInfo = {
       rank: myRank,
       id: myUser._id,
       nickname: myUser.nickname || '我',
       avatar: myUser.avatar || '/images/icons/user.png',
-      count: myUser[sortField] || 0,
+      count: myScore,
       weekCount: myUser.week_questions || 0,
       todayCount: myUser.today_questions || 0,
       activeDays: myUser.continue_days || 0,
       isMe: true
-    } : null;
+    };
+
+    // 获取总用户数
+    const totalCountRes = await db.collection('users').count();
 
     return {
       list,
       myRank: myRankInfo,
-      total: myRankRes.data.length,
+      total: totalCountRes.total,
       hasNext: list.length === pageSize
     };
   } catch (err) {
