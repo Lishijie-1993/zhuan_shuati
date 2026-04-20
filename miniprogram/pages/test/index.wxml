@@ -1,0 +1,27 @@
+<view class="container">
+  <view class="header-bg"></view>
+  
+  <view class="content">
+    <view class="page-title">
+      <text class="title-main">试卷列表</text>
+      <text class="title-sub">共 {{paperList.length}} 套模拟试卷</text>
+    </view>
+
+    <view class="paper-list">
+      <block wx:for="{{paperList}}" wx:key="id">
+        <view class="paper-card" bindtap="startExam" data-id="{{item.id}}">
+          <view class="card-left">
+            <view class="paper-name">{{item.title}}</view>
+            <view class="paper-tags">
+              <view class="tag">{{item.questionCount}}题</view>
+              <view class="tag">{{item.duration}}分钟</view>
+            </view>
+          </view>
+          <view class="card-right">
+            <view class="start-btn">去答题</view>
+          </view>
+        </view>
+      </block>
+    </view>
+  </view>
+</view>

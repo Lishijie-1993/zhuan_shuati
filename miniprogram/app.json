@@ -8,6 +8,7 @@
     "pages/info/index",
     "pages/rank/index",
     "pages/random/index",
+    "pages/test/index",
     "pages/error/index",
     "pages/user/index"
   ],
