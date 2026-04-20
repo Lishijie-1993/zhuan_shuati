@@ -80,6 +80,11 @@ class CloudService {
 
   // ========== 考试相关 ==========
 
+  // 获取试卷列表
+  async listPapers() {
+    return await this.call('listPapers');
+  }
+
   // 开始考试
   async startPaper(paperId) {
     return await this.call('startPaper', { paperId });

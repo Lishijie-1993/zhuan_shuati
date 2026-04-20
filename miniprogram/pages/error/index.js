@@ -21,13 +21,13 @@ Page({
   async loadErrors() {
     try {
       wx.showLoading({ title: '加载中...' });
-      
-      const res = await cloud.call('getQuestions', { mode: 'error' });
-      
+
+      const res = await cloud.call('getQuestions', { mode: 'error', limit: 100 });
+
       if (res && res.list) {
         this.setData({
           errors: res.list,
-          errorCount: res.list.length,
+          errorCount: res.total || res.list.length,
           loading: false
         });
       } else {
@@ -37,7 +37,7 @@ Page({
           loading: false
         });
       }
-      
+
       wx.hideLoading();
     } catch (err) {
       console.error('加载错题失败:', err);
@@ -64,7 +64,6 @@ Page({
     this.setData({ activeTab: tab });
   },
 
-  // 查看错题详情
   viewError(e) {
     const questionId = e.currentTarget.dataset.id;
     wx.navigateTo({
@@ -72,7 +71,6 @@ Page({
     });
   },
 
-  // 重新练习错题
   retryErrors() {
     wx.navigateTo({
       url: '/pages/quiz/index?mode=error'

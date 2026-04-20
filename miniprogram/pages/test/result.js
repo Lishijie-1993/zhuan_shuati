@@ -1,66 +1,40 @@
 // pages/test/result.js
 Page({
-
-  /**
-   * 页面的初始数据
-   */
   data: {
-
+    score: 0,
+    correctCount: 0,
+    totalCount: 0,
+    paperTitle: '模拟考试',
+    passed: false
   },
 
-  /**
-   * 生命周期函数--监听页面加载
-   */
   onLoad(options) {
+    const { score, correct, total, paperId } = options;
 
+    this.setData({
+      score: parseInt(score) || 0,
+      correctCount: parseInt(correct) || 0,
+      totalCount: parseInt(total) || 0,
+      passed: parseInt(score) >= 60
+    });
   },
 
-  /**
-   * 生命周期函数--监听页面初次渲染完成
-   */
-  onReady() {
-
+  goHome() {
+    wx.redirectTo({
+      url: '/pages/test/index'
+    });
   },
 
-  /**
-   * 生命周期函数--监听页面显示
-   */
-  onShow() {
-
+  doAgain() {
+    wx.navigateBack({
+      delta: 1
+    });
   },
 
-  /**
-   * 生命周期函数--监听页面隐藏
-   */
-  onHide() {
-
-  },
-
-  /**
-   * 生命周期函数--监听页面卸载
-   */
-  onUnload() {
-
-  },
-
-  /**
-   * 页面相关事件处理函数--监听用户下拉动作
-   */
-  onPullDownRefresh() {
-
-  },
-
-  /**
-   * 页面上拉触底事件的处理函数
-   */
-  onReachBottom() {
-
-  },
-
-  /**
-   * 用户点击右上角分享
-   */
-  onShareAppMessage() {
-
+  viewAnalysis() {
+    wx.showToast({
+      title: '功能开发中',
+      icon: 'none'
+    });
   }
-})
+});

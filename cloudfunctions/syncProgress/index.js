@@ -10,10 +10,13 @@ exports.main = async (event, context) => {
   const openid = wxContext.OPENID;
 
   try {
+    // 兼容 chapter_id 和 chapterTitle 两种字段名
+    const queryChapter = chapter || event.chapterId;
+
     // 查询是否存在进度记录
     const progressRes = await db.collection('user_quiz_progress').where({
       user_id: openid,
-      chapter_id: chapter
+      chapter_title: queryChapter
     }).get();
 
     const now = new Date();
@@ -35,7 +38,7 @@ exports.main = async (event, context) => {
       await db.collection('user_quiz_progress').add({
         data: {
           user_id: openid,
-          chapter_id: chapter,
+          chapter_title: queryChapter,
           last_index: currentIndex,
           correct_count: correctCount,
           last_time: now,

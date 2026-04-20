@@ -19,13 +19,13 @@
   <view class="content-section">
     <view class="paper-list">
       <block wx:for="{{paperList}}" wx:key="id">
-        <view class="paper-card" bindtap="startExam" data-id="{{item.id}}">
+        <view class="paper-card" bindtap="startExam" data-id="{{item.id}}" data-title="{{item.title}}">
           <view class="card-left">
             <view class="paper-name">{{item.title}}</view>
             <view class="paper-tags">
-              <view class="tag">{{item.questionCount}}题</view>
-              <view class="tag">{{item.duration}}分钟</view>
-              <view class="tag score-tag" wx:if="{{item.totalScore}}">总分{{item.totalScore}}</view>
+              <view class="tag">{{item.questionCount || item.question_count || 100}}题</view>
+              <view class="tag">{{item.duration || 90}}分钟</view>
+              <view class="tag score-tag" wx:if="{{item.totalScore || item.total_score}}">总分{{item.totalScore || item.total_score}}</view>
             </view>
           </view>
           <view class="card-right">
@@ -34,9 +34,13 @@
         </view>
       </block>
 
-      <view class="empty-state" wx:if="{{paperList.length === 0}}">
+      <view class="empty-state" wx:if="{{paperList.length === 0 && !loading}}">
         <image src="/images/empty_error.png" class="empty-icon" mode="aspectFit"></image>
         <text class="empty-text">暂无模拟试卷，请联系管理员上传</text>
+      </view>
+
+      <view class="loading-state" wx:if="{{loading}}">
+        <text>加载中...</text>
       </view>
     </view>
   </view>

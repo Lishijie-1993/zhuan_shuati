@@ -19,33 +19,44 @@ Page({
   },
 
   onLoad(options) {
-    if (options.title) {
+    if (options.mode === 'error') {
+      // 错题练习模式
+      this.setData({
+        chapterTitle: '错题练习',
+        mode: 'error'
+      });
+      wx.setNavigationBarTitle({ title: '错题练习' });
+    } else if (options.title) {
       const decodedTitle = decodeURIComponent(options.title);
       this.setData({
         chapterTitle: decodedTitle
       });
       wx.setNavigationBarTitle({ title: decodedTitle });
     }
-    
-    // 加载题目
-    this.loadQuestions();
+
+    // 如果有指定题目ID，加载单题
+    if (options.id) {
+      this.loadSingleQuestion(options.id);
+    } else {
+      this.loadQuestions();
+    }
   },
 
   onShow() {
     this.checkFavoriteStatus();
   },
 
-  // 加载题目列表
-  async loadQuestions() {
+  // 加载单题
+  async loadSingleQuestion(questionId) {
     try {
       wx.showLoading({ title: '加载中...' });
-      
-      const res = await cloud.getQuestions(this.data.chapterTitle, 'normal');
-      
+
+      const res = await cloud.call('getQuestions', { mode: 'byIds', ids: [questionId] });
+
       if (res && res.list && res.list.length > 0) {
         const questions = res.list;
         const firstQ = questions[0];
-        
+
         this.setData({
           questions,
           totalQuestions: questions.length,
@@ -55,12 +66,48 @@ Page({
           analysisText: firstQ.analysis,
           currentIndex: 0
         });
-        
+
+        this.checkFavoriteStatus();
+      }
+
+      wx.hideLoading();
+    } catch (err) {
+      console.error('加载题目失败:', err);
+      wx.hideLoading();
+    }
+  },
+
+  // 加载题目列表
+  async loadQuestions() {
+    try {
+      wx.showLoading({ title: '加载中...' });
+
+      // 根据模式决定调用方式
+      const mode = this.data.mode === 'error' ? 'error' : 'normal';
+      const res = await cloud.getQuestions(
+        this.data.mode === 'error' ? null : this.data.chapterTitle,
+        mode
+      );
+
+      if (res && res.list && res.list.length > 0) {
+        const questions = res.list;
+        const firstQ = questions[0];
+
+        this.setData({
+          questions,
+          totalQuestions: questions.length,
+          currentQuestionText: firstQ.content,
+          options: firstQ.options,
+          correctAnswer: firstQ.correctAnswer,
+          analysisText: firstQ.analysis,
+          currentIndex: 0
+        });
+
         this.checkFavoriteStatus();
       } else {
         this.loadMockData();
       }
-      
+
       wx.hideLoading();
     } catch (err) {
       console.error('加载题目失败:', err);
@@ -232,27 +279,13 @@ Page({
       const res = await cloud.toggleFavorite(currentQ.id, action);
 
       if (res) {
-        // 更新本地存储
-        let favorites = wx.getStorageSync(STORAGE_KEYS.FAVORITES) || [];
-        
+        this.setData({ isFavorited: !this.data.isFavorited });
+
         if (action === 'add') {
-          favorites.push({
-            id: currentQ.id,
-            chapterTitle: this.data.chapterTitle,
-            questionText: currentQ.content,
-            options: currentQ.options,
-            correctAnswer: currentQ.correctAnswer,
-            analysisText: currentQ.analysis || '暂无解析',
-            timestamp: Date.now()
-          });
           wx.showToast({ title: '收藏成功', icon: 'success' });
         } else {
-          favorites = favorites.filter(item => item.id !== currentQ.id);
           wx.showToast({ title: '已取消收藏', icon: 'none' });
         }
-        
-        wx.setStorageSync(STORAGE_KEYS.FAVORITES, favorites);
-        this.setData({ isFavorited: !this.data.isFavorited });
       }
     } catch (err) {
       console.error('收藏操作失败:', err);

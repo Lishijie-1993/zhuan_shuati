@@ -10,12 +10,48 @@ exports.main = async (event, context) => {
   const openid = wxContext.OPENID;
 
   try {
+    // 兼容 questionId 和 question_id 两种字段名
+    const qId = questionId || event.question_id;
+
+    if (action === 'list') {
+      // 获取收藏列表
+      const favRes = await db.collection('user_favorites')
+        .where({ user_id: openid })
+        .orderBy('created_at', 'desc')
+        .get();
+
+      // 获取题目详情
+      const questionIds = favRes.data.map(f => f.question_id);
+      if (questionIds.length === 0) {
+        return { status: 'ok', list: [] };
+      }
+
+      const questionsRes = await db.collection('question_bank')
+        .where({ _id: db.command.in(questionIds) })
+        .get();
+
+      const list = questionIds
+        .map(id => questionsRes.data.find(q => q._id === id))
+        .filter(q => q)
+        .map(q => ({
+          id: q._id,
+          chapterTitle: q.chapter_id,
+          questionText: q.content,
+          options: q.options || [],
+          correctAnswer: q.correct_answer,
+          analysisText: q.analysis || '暂无解析',
+          type: q.type
+        }));
+
+      return { status: 'ok', list };
+    }
+
     if (action === 'add') {
       // 添加收藏
       // 检查是否已收藏
       const existRes = await db.collection('user_favorites').where({
         user_id: openid,
-        question_id: questionId
+        question_id: qId
       }).get();
 
       if (existRes.data.length > 0) {
@@ -25,7 +61,7 @@ exports.main = async (event, context) => {
       await db.collection('user_favorites').add({
         data: {
           user_id: openid,
-          question_id: questionId,
+          question_id: qId,
           created_at: new Date()
         }
       });
@@ -38,7 +74,7 @@ exports.main = async (event, context) => {
       // 取消收藏
       await db.collection('user_favorites').where({
         user_id: openid,
-        question_id: questionId
+        question_id: qId
       }).remove();
 
       // 更新用户收藏数量

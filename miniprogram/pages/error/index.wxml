@@ -9,7 +9,7 @@
 
     <view class="stat-circle-wrapper">
       <view class="stat-circle">
-        <view class="stat-num">0</view>
+        <view class="stat-num">{{errorCount}}</view>
         <view class="stat-label">我的错题</view>
       </view>
     </view>
@@ -21,13 +21,25 @@
   </view>
 
   <view class="content-section">
-    <view class="section-header">
-      <text class="section-title">按题型练习</text>
-    </view>
+    <block wx:if="{{errors.length > 0}}">
+      <view class="error-item" wx:for="{{errors}}" wx:key="id" bindtap="viewError" data-id="{{item.id}}">
+        <view class="error-q-type">
+          <text class="type-tag">{{item.type === 'single' ? '单选' : (item.type === 'multiple' ? '多选' : '判断')}}</text>
+        </view>
+        <view class="error-q-content">{{item.content}}</view>
+        <view class="error-q-info">
+          <text class="arrow">〉</text>
+        </view>
+      </view>
+    </block>
 
-    <view class="empty-state">
+    <view wx:else class="empty-state">
       <image src="/images/empty_error.png" class="empty-icon" mode="aspectFit"></image>
-      <text class="empty-text">暂无数据</text>
+      <text class="empty-text">{{loading ? '加载中...' : '暂无错题记录'}}</text>
     </view>
+  </view>
+
+  <view class="action-bar" wx:if="{{errors.length > 0}}">
+    <button class="btn-retry" bindtap="retryErrors">重新练习</button>
   </view>
 </view>

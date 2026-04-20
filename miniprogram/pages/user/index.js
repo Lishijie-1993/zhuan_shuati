@@ -28,13 +28,21 @@ Page({
   async loadUserInfo() {
     try {
       const res = await cloud.getUserInfo();
-      
+
       if (res && res.userInfo) {
-        // 保存到本地存储
-        wx.setStorageSync(STORAGE_KEYS.USER_INFO, res.userInfo);
-        this.setData({ userInfo: res.userInfo });
+        // 从数据库获取实时错题数量
+        const errorCount = await this.getErrorCount();
+        const favoriteCount = await this.getFavoriteCount();
+
+        const userInfo = {
+          ...res.userInfo,
+          wrongQuestions: errorCount,
+          favorites: favoriteCount
+        };
+
+        wx.setStorageSync(STORAGE_KEYS.USER_INFO, userInfo);
+        this.setData({ userInfo });
       } else {
-        // 使用本地缓存
         const localUser = wx.getStorageSync(STORAGE_KEYS.USER_INFO);
         if (localUser) {
           this.setData({ userInfo: localUser });
@@ -46,6 +54,28 @@ Page({
       if (localUser) {
         this.setData({ userInfo: localUser });
       }
+    }
+  },
+
+  // 获取错题数量
+  async getErrorCount() {
+    try {
+      const res = await cloud.call('getQuestions', { mode: 'error', limit: 1 });
+      return res && res.total ? res.total : 0;
+    } catch (err) {
+      console.error('获取错题数量失败:', err);
+      return 0;
+    }
+  },
+
+  // 获取收藏数量
+  async getFavoriteCount() {
+    try {
+      const res = await cloud.toggleFavorite(null, 'list');
+      return res && res.list ? res.list.length : 0;
+    } catch (err) {
+      console.error('获取收藏数量失败:', err);
+      return 0;
     }
   },
 

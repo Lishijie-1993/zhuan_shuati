@@ -4,7 +4,7 @@
     <text class="chapter-name">我的收藏</text>
   </view>
 
-  <view class="mode-switch">
+  <view class="mode-switch" wx:if="{{!loading && favorites.length > 0}}">
     <view class="switch-container">
       <view class="mode-item {{mode === 'answer' ? 'active' : ''}}" bindtap="switchMode" data-mode="answer">答题模式</view>
       <view class="mode-item {{mode === 'recite' ? 'active' : ''}}" bindtap="switchMode" data-mode="recite">背题模式</view>
@@ -12,7 +12,11 @@
     <text class="auto-next" bindtap="toggleAutoNext">{{isAutoNext ? '自动' : '手动'}}</text>
   </view>
 
-  <view wx:if="{{favorites.length === 0}}" class="empty-state">
+  <view wx:if="{{loading}}" class="loading-state">
+    <text>加载中...</text>
+  </view>
+
+  <view wx:elif="{{favorites.length === 0}}" class="empty-state">
     <image src="/images/icons/favorite2.png" class="empty-icon"></image>
     <text>收藏夹中暂无题目</text>
   </view>
@@ -29,7 +33,7 @@
 
         <view class="options-list">
           <view 
-            class="option-item {{ (mode === 'recite' && opt.id === item.correctAnswer) || (mode === 'answer' && userAnswers[item.id] !== null && opt.id === item.correctAnswer) ? 'active-correct' : '' }} {{ mode === 'answer' && userAnswers[item.id] !== null && opt.id !== item.correctAnswer && userAnswers[item.id] === opt.id ? 'active-error' : '' }}" 
+            class="option-item {{ (mode === 'recite' && opt.id === item.correctAnswer) || (mode === 'answer' && userAnswers[item.id] && opt.id === item.correctAnswer) ? 'active-correct' : '' }} {{ mode === 'answer' && userAnswers[item.id] && opt.id !== item.correctAnswer && userAnswers[item.id] === opt.id ? 'active-error' : '' }}" 
             wx:for="{{item.options}}" 
             wx:for-item="opt"
             wx:key="id"
@@ -39,8 +43,8 @@
             data-index="{{qIndex}}"
           >
             <text class="option-label">{{opt.id}}. {{opt.text}}</text>
-            <icon wx:if="{{ (mode === 'recite' && opt.id === item.correctAnswer) || (mode === 'answer' && userAnswers[item.id] !== null && opt.id === item.correctAnswer) }}" type="success" size="18" color="#07C160"></icon>
-            <icon wx:if="{{ mode === 'answer' && userAnswers[item.id] !== null && opt.id !== item.correctAnswer && userAnswers[item.id] === opt.id }}" type="warn" size="18" color="#FA5151"></icon>
+            <icon wx:if="{{ (mode === 'recite' && opt.id === item.correctAnswer) || (mode === 'answer' && userAnswers[item.id] && opt.id === item.correctAnswer) }}" type="success" size="18" color="#07C160"></icon>
+            <icon wx:if="{{ mode === 'answer' && userAnswers[item.id] && opt.id !== item.correctAnswer && userAnswers[item.id] === opt.id }}" type="warn" size="18" color="#FA5151"></icon>
           </view>
         </view>
 

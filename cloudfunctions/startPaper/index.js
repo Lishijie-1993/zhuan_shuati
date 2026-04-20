@@ -50,10 +50,36 @@ exports.main = async (event, context) => {
       }
     });
 
+    // 获取题目详情
+    let questions = [];
+    if (questionIds.length > 0) {
+      const questionsRes = await db.collection('question_bank')
+        .where({
+          _id: _.in(questionIds)
+        })
+        .get();
+
+      // 按原始顺序排列题目
+      questions = questionIds
+        .map(id => questionsRes.data.find(q => q._id === id))
+        .filter(q => q)
+        .map(q => ({
+          id: q._id,
+          type: q.type === 'single' ? 'single' : (q.type === 'multiple' ? 'multiple' : 'judge'),
+          title: q.content,
+          options: (q.options || []).map(opt => ({
+            key: opt.key,
+            content: opt.value || opt.content || ''
+          })),
+          answer: q.correct_answer,
+          analysis: q.analysis || ''
+        }));
+    }
+
     return {
       success: true,
       snapshotId,
-      questionIds,
+      questions,
       duration,
       title: paper.title,
       totalScore: paper.total_score
