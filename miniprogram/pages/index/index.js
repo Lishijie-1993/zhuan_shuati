@@ -9,7 +9,6 @@ Page({
       { name: '乱序刷题', icon: '/images/icons/random.png', bgColor: '#F2F9F2' }, 
       { name: '我的收藏', icon: '/images/icons/favorite.png', bgColor: '#FFF9E6' }, 
       { name: '我的错题', icon: '/images/icons/error.png', bgColor: '#F5F5F5' }, 
-      { name: '未做习题', icon: '/images/icons/todo.png', bgColor: '#F2F2F2' }, 
       { name: '刷知识点', icon: '/images/icons/history.png', bgColor: '#F0F7FF' }, 
       { name: '考试记录', icon: '/images/icons/notes.png', bgColor: '#F9F2FD' } 
     ]
