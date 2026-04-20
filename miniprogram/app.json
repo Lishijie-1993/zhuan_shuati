@@ -7,6 +7,7 @@
     "pages/category/index",
     "pages/quiz/index",
     "pages/info/index",
+    "pages/info/detail/index",
     "pages/rank/index",
     "pages/random/index",
     "pages/test/index",

@@ -1,1 +1,195 @@
 /* pages/info/index.wxss */
+page {
+  background-color: #f8f9fb;
+}
+
+.container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* =========================================
+   1. 搜索区域
+   ========================================= */
+.search-section {
+  background-color: #fff;
+  padding: 20rpx 30rpx;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.03);
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  background-color: #f5f6f8;
+  border-radius: 36rpx;
+  padding: 16rpx 30rpx;
+}
+
+.search-icon {
+  width: 32rpx;
+  height: 32rpx;
+  margin-right: 16rpx;
+}
+
+.search-input {
+  flex: 1;
+  font-size: 28rpx;
+  color: #333;
+}
+
+.search-placeholder {
+  color: #999;
+  font-size: 28rpx;
+}
+
+/* =========================================
+   2. 热门标签区域
+   ========================================= */
+.tags-section {
+  background-color: #fff;
+  padding: 0 20rpx 20rpx;
+}
+
+.tags-scroll {
+  white-space: nowrap;
+  display: flex;
+}
+
+.tag-item {
+  display: inline-block;
+  padding: 12rpx 32rpx;
+  font-size: 26rpx;
+  color: #666;
+  background-color: #f5f6f8;
+  border-radius: 30rpx;
+  margin-right: 16rpx;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.tag-item.active {
+  background-color: #2D5CF6;
+  color: #fff;
+  font-weight: 500;
+}
+
+.tag-item:active {
+  opacity: 0.8;
+  transform: scale(0.95);
+}
+
+/* =========================================
+   3. 资讯列表
+   ========================================= */
+.news-list {
+  flex: 1;
+  padding: 20rpx 30rpx;
+  box-sizing: border-box;
+}
+
+.news-card {
+  background-color: #fff;
+  border-radius: 16rpx;
+  margin-bottom: 24rpx;
+  overflow: hidden;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+  transition: all 0.2s;
+}
+
+.news-card:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+.card-image {
+  width: 100%;
+  height: 320rpx;
+  background-color: #f0f4ff;
+}
+
+.card-content {
+  padding: 24rpx;
+}
+
+.card-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.5;
+  margin-bottom: 20rpx;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.meta-left {
+  display: flex;
+  align-items: center;
+}
+
+.tag-badge {
+  font-size: 22rpx;
+  color: #2D5CF6;
+  background-color: #eef3ff;
+  padding: 6rpx 16rpx;
+  border-radius: 20rpx;
+  margin-right: 20rpx;
+}
+
+.views {
+  font-size: 24rpx;
+  color: #999;
+  display: flex;
+  align-items: center;
+}
+
+.view-icon {
+  font-size: 24rpx;
+  margin-right: 6rpx;
+}
+
+.publish-time {
+  font-size: 24rpx;
+  color: #999;
+}
+
+/* =========================================
+   4. 加载状态
+   ========================================= */
+.loading-more,
+.no-more {
+  display: flex;
+  justify-content: center;
+  padding: 40rpx 0;
+}
+
+.loading-text {
+  font-size: 26rpx;
+  color: #999;
+}
+
+.no-more {
+  font-size: 24rpx;
+  color: #ccc;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 0;
+  color: #999;
+  font-size: 28rpx;
+}
