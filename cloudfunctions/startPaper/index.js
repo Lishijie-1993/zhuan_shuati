@@ -67,14 +67,13 @@ exports.main = async (event, context) => {
       }
     });
 
-    // 格式化返回给前端的题目数据（不含正确答案）
+    // 【安全修复】考试模式下绝不能将答案发送给客户端
+    // 正确答案和解析仅在后端 submitPaper 中比对
     const questions = questionSnapshot.map(q => ({
       id: q._id,
       type: q.type === 'single' ? 'single' : (q.type === 'multiple' ? 'multiple' : 'judge'),
       title: q.content,
-      options: formatOptions(q.options),
-      answer: parseAnswer(q.correct_answer, q.type),
-      analysis: q.analysis || ''
+      options: formatOptions(q.options)
     }));
 
     return {

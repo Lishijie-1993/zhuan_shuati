@@ -9,6 +9,22 @@ exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext();
   const openid = wxContext.OPENID;
 
+  // 【安全修复】必填参数校验
+  if (chapter === undefined || currentIndex === undefined) {
+    return {
+      success: false,
+      error: '缺少必要参数：chapter 和 currentIndex'
+    };
+  }
+
+  // 【安全修复】参数类型校验
+  if (typeof currentIndex !== 'number' || (correctCount !== undefined && typeof correctCount !== 'number')) {
+    return {
+      success: false,
+      error: '参数类型错误：currentIndex 和 correctCount 必须为数字'
+    };
+  }
+
   try {
     // 兼容 chapter_id 和 chapterTitle 两种字段名
     const queryChapter = chapter || event.chapterId;

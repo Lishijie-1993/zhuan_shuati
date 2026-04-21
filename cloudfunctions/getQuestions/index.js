@@ -167,19 +167,26 @@ async function getErrorQuestions(openid, page, limit) {
   };
 }
 
-// 格式化题目数据
-function formatQuestion(q) {
-  return {
+// 格式化题目数据（根据模式决定是否包含敏感字段）
+function formatQuestion(q, includeAnswer = false) {
+  const base = {
     id: q._id || q.id,
     subjectId: q.subject_id,
     chapterId: q.chapter_id,
     type: q.type,
     content: q.content,
     options: formatOptions(q.options),
-    correctAnswer: q.correct_answer,
-    analysis: q.analysis || '暂无解析',
     difficulty: q.difficulty || 1
   };
+
+  // 【安全修复】只有明确要求或非考试模式下才返回答案
+  // 调用方应显式传入 includeAnswer: true
+  if (includeAnswer) {
+    base.correctAnswer = q.correct_answer;
+    base.analysis = q.analysis || '暂无解析';
+  }
+
+  return base;
 }
 
 // 统一格式化选项数据

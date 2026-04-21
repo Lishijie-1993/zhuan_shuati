@@ -25,6 +25,15 @@ exports.main = async (event, context) => {
     }
 
     const record = recordRes.data[0];
+
+    // 【安全修复】防止重复提交：检查是否已完成
+    if (record.status === 'completed') {
+      return {
+        success: false,
+        error: '该试卷已提交，请勿重复提交'
+      };
+    }
+
     const questionIds = record.question_ids || [];
 
     // 【安全修复】服务端计算实际用时，不信任客户端数据
