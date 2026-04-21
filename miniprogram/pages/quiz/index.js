@@ -17,8 +17,9 @@ Page({
     options: [],
     currentQuestionText: '',
     currentQuestionId: '',  // 当前题目ID，用于追踪
-    questions: [],  // 保留用于翻页，但不包含完整题目数据
-    // 不再存储完整题目列表以减少setData数据量
+    currentQuestionType: '',  // 当前题目类型
+    // 注意：questions 数组不再存储在 data 中，避免 setData 巨型数组性能问题
+    // 题目列表存储在内存变量 _questions 中
     statusBarHeight: 20,  // 状态栏高度，默认值
     // 答题历史记录，用于保留每道题的答案
     answerHistory: {},  // { questionId: { answer: 'A', timestamp: 123456 } }
@@ -28,10 +29,16 @@ Page({
 
   // 答题历史记录相关变量
   _answerHistory: {},
+  // 题目列表存储在内存中，不通过 setData 传递
+  _questions: [],
+  // 当前题目索引（内存变量）
+  _currentIndex: 0,
   // syncProgress 防抖定时器
   _syncProgressTimer: null,
   // 防抖延迟时间（毫秒）
   _SYNC_DEBOUNCE_MS: 2000,
+  // 防抖锁：防止答对时频繁调用
+  _syncLock: false,
 
   onLoad(options) {
     // 标记页面已挂载，用于防止内存泄漏
@@ -96,20 +103,24 @@ Page({
       const res = await cloud.call('getQuestions', { mode: 'byIds', ids: [questionId] });
 
       if (res && res.list && res.list.length > 0) {
-        const questions = res.list;
-        const firstQ = questions[0];
+        // 存储到内存变量，不通过 setData 传递
+        this._questions = res.list;
+        this._currentIndex = 0;
+
+        const firstQ = this._questions[0];
+        const savedAnswer = this._getHistoryAnswer(firstQ.id);
 
         this.setData({
-          questions,
-          totalQuestions: questions.length,
+          totalQuestions: this._questions.length,
           currentQuestionText: firstQ.content,
           options: firstQ.options,
           correctAnswer: firstQ.correctAnswer,
           analysisText: firstQ.analysis,
           currentQuestionId: firstQ.id,
+          currentQuestionType: firstQ.type,
           currentIndex: 0,
-          userAnswer: this._getHistoryAnswer(firstQ.id) || null,
-          userAnswers: firstQ.type === 'multiple' ? { [firstQ.id]: this._getHistoryAnswer(firstQ.id) || [] } : {}
+          userAnswer: savedAnswer || null,
+          userAnswers: firstQ.type === 'multiple' ? { [firstQ.id]: savedAnswer || [] } : {}
         });
 
         this.checkFavoriteStatus();
@@ -122,7 +133,7 @@ Page({
     }
   },
 
-  // 加载题目列表（优化：只存储必要数据，减少setData量）
+  // 加载题目列表（优化：题目存储在内存变量中，不通过 setData）
   async loadQuestions() {
     try {
       wx.showLoading({ title: '加载中...' });
@@ -135,20 +146,24 @@ Page({
       );
 
       if (res && res.list && res.list.length > 0) {
-        const questions = res.list;
-        const firstQ = questions[0];
+        // 存储到内存变量，不通过 setData 传递
+        this._questions = res.list;
+        this._currentIndex = 0;
+
+        const firstQ = this._questions[0];
+        const savedAnswer = this._getHistoryAnswer(firstQ.id);
 
         this.setData({
-          questions,
-          totalQuestions: questions.length,
+          totalQuestions: this._questions.length,
           currentQuestionText: firstQ.content,
           options: firstQ.options,
           correctAnswer: firstQ.correctAnswer,
           analysisText: firstQ.analysis,
           currentQuestionId: firstQ.id,
+          currentQuestionType: firstQ.type,
           currentIndex: 0,
-          userAnswer: this._getHistoryAnswer(firstQ.id) || null,
-          userAnswers: firstQ.type === 'multiple' ? { [firstQ.id]: this._getHistoryAnswer(firstQ.id) || [] } : {}
+          userAnswer: savedAnswer || null,
+          userAnswers: firstQ.type === 'multiple' ? { [firstQ.id]: savedAnswer || [] } : {}
         });
 
         this.checkFavoriteStatus();
@@ -182,18 +197,24 @@ Page({
       }
     ];
 
-    const firstQ = mockQuestions[0];
+    // 存储到内存变量，不通过 setData 传递
+    this._questions = mockQuestions;
+    this._currentIndex = 0;
+
+    const firstQ = this._questions[0];
+    const savedAnswer = this._getHistoryAnswer(firstQ.id);
+
     this.setData({
-      questions: mockQuestions,
-      totalQuestions: mockQuestions.length,
+      totalQuestions: this._questions.length,
       currentQuestionText: firstQ.content,
       options: firstQ.options,
       correctAnswer: firstQ.correctAnswer,
       analysisText: firstQ.analysis,
       currentQuestionId: firstQ.id,
+      currentQuestionType: firstQ.type,
       currentIndex: 0,
-      userAnswer: this._getHistoryAnswer(firstQ.id) || null,
-      userAnswers: firstQ.type === 'multiple' ? { [firstQ.id]: this._getHistoryAnswer(firstQ.id) || [] } : {}
+      userAnswer: savedAnswer || null,
+      userAnswers: firstQ.type === 'multiple' ? { [firstQ.id]: savedAnswer || [] } : {}
     });
 
     this.checkFavoriteStatus();
@@ -248,26 +269,30 @@ Page({
     return null;
   },
 
-  // 防抖同步进度
-  _debouncedSyncProgress() {
+  // 防抖同步进度（全局防抖，限制每2秒最多调用一次）
+  _debouncedSyncProgress(correct = 0) {
+    // 如果有锁在等待中，直接忽略
+    if (this._syncLock) return;
+
     if (this._syncProgressTimer) {
       clearTimeout(this._syncProgressTimer);
     }
+
     this._syncProgressTimer = setTimeout(() => {
       if (this._isMounted !== false) {
-        cloud.syncProgress(this.data.chapterTitle, this.data.currentIndex, 0)
+        cloud.syncProgress(this.data.chapterTitle, this.data.currentIndex, correct)
           .catch(err => console.error('同步进度失败:', err));
       }
       this._syncProgressTimer = null;
+      this._syncLock = false;
     }, this._SYNC_DEBOUNCE_MS);
   },
 
-  // 获取当前题目（带安全检查）
+  // 获取当前题目（从内存变量读取，不经过 setData）
   getCurrentQuestion() {
-    const { questions, currentIndex } = this.data;
-    if (!questions || questions.length === 0) return null;
-    if (currentIndex < 0 || currentIndex >= questions.length) return null;
-    return questions[currentIndex];
+    if (!this._questions || this._questions.length === 0) return null;
+    if (this._currentIndex < 0 || this._currentIndex >= this._questions.length) return null;
+    return this._questions[this._currentIndex];
   },
 
   // 检查收藏状态（使用用户隔离的存储）
@@ -364,16 +389,11 @@ Page({
     // 记录答案到历史（用于保留翻页时的答案）
     this._recordAnswer(currentQ.id, selectedId, false);
 
-    // 答题正确，记录并报告（添加错误处理防止弱网雪崩）
+    // 答对时，使用防抖方法同步进度（限制调用频率）
     if (selectedId === this.data.correctAnswer) {
-      // 同步进度到服务器
-      cloud.syncProgress(
-        this.data.chapterTitle,
-        this.data.currentIndex,
-        1
-      ).catch(err => console.error('同步进度失败:', err));
+      this._debouncedSyncProgress(1);
     } else {
-      // 答错，记录错题
+      // 答错，记录错题（这个可以立即调用，因为不会频繁触发）
       cloud.reportError(currentQ.id, selectedId).catch(err => console.error('记录错题失败:', err));
     }
 
@@ -405,12 +425,12 @@ Page({
     // 记录答案到历史（用于保留翻页时的答案）
     this._recordAnswer(questionId, userArr, true);
 
-    // 记录进度（添加错误处理防止弱网雪崩）
+    // 答对时，使用防抖方法同步进度（限制调用频率）
     if (isCorrect) {
-      cloud.syncProgress(this.data.chapterTitle, this.data.currentIndex, 1)
-        .catch(err => console.error('同步进度失败:', err));
+      this._debouncedSyncProgress(1);
     } else {
-      cloud.reportError(currentQ.id, userArr.join(','))
+      // 答错，记录错题（这个可以立即调用）
+      cloud.reportError(questionId, userArr.join(','))
         .catch(err => console.error('记录错题失败:', err));
     }
 
@@ -452,21 +472,22 @@ Page({
 
   // 上一题（保留当前题目答案历史）
   prevQuestion() {
-    if (this.data.questions.length === 0) {
+    if (this._questions.length === 0) {
       wx.showToast({ title: '暂无题目', icon: 'none' });
       return;
     }
-    if (this.data.currentIndex > 0) {
-      const newIndex = this.data.currentIndex - 1;
-      const prevQ = this.data.questions[newIndex];
+    if (this._currentIndex > 0) {
+      this._currentIndex = this._currentIndex - 1;
+      const prevQ = this._questions[this._currentIndex];
 
       // 获取上一题的之前答案（如果有的话）
       const prevAnswer = this._getHistoryAnswer(prevQ.id);
       const isMulti = prevQ.type === 'multiple';
 
       this.setData({
-        currentIndex: newIndex,
+        currentIndex: this._currentIndex,
         currentQuestionId: prevQ.id,
+        currentQuestionType: prevQ.type,
         userAnswer: prevAnswer || null,
         userAnswers: isMulti ? { [prevQ.id]: prevAnswer || [] } : {}
       }, () => {
@@ -479,21 +500,22 @@ Page({
 
   // 下一题（保留当前题目答案历史）
   nextQuestion() {
-    if (this.data.questions.length === 0) {
+    if (this._questions.length === 0) {
       wx.showToast({ title: '暂无题目', icon: 'none' });
       return;
     }
-    if (this.data.currentIndex < this.data.totalQuestions - 1) {
-      const newIndex = this.data.currentIndex + 1;
-      const nextQ = this.data.questions[newIndex];
+    if (this._currentIndex < this._questions.length - 1) {
+      this._currentIndex = this._currentIndex + 1;
+      const nextQ = this._questions[this._currentIndex];
 
       // 获取下一题的之前答案（如果有的话）
       const nextAnswer = this._getHistoryAnswer(nextQ.id);
       const isMulti = nextQ.type === 'multiple';
 
       this.setData({
-        currentIndex: newIndex,
+        currentIndex: this._currentIndex,
         currentQuestionId: nextQ.id,
+        currentQuestionType: nextQ.type,
         userAnswer: nextAnswer || null,
         userAnswers: isMulti ? { [nextQ.id]: nextAnswer || [] } : {}
       }, () => {

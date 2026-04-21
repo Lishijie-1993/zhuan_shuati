@@ -14,20 +14,18 @@ Page({
     hasMore: true
   },
 
+  // 标记是否已完成首次加载
+  _initialLoaded: false,
+
   onLoad() {
     this.loadHistory();
   },
 
-  // 历史记录页面每次进入都需要刷新
+  // 历史记录页面：只在首次加载时获取数据，返回时保持滚动位置
   onShow() {
-    // 添加加载状态检查，避免重复请求
-    if (!this.data.loading && this.data.historyList.length === 0) {
-      this.setData({ 
-        page: 1, 
-        historyList: [], 
-        hasMore: true, 
-        loading: false 
-      });
+    // 如果已完成首次加载，从子页面返回时不再刷新，避免滚动位置重置
+    // 用户可以通过下拉刷新来手动刷新数据
+    if (!this._initialLoaded) {
       this.loadHistory();
     }
   },
@@ -35,7 +33,7 @@ Page({
   async loadHistory() {
     // 【修复点】：增加严谨的防抖和阻断逻辑
     if (this.data.loading) return; 
-    if (!this.data.hasMore) return;
+    if (!this.data.hasMore && this.data.historyList.length > 0) return;
 
     try {
       this.setData({ loading: true });
@@ -60,14 +58,21 @@ Page({
           hasMore: res.hasNext,
           page: this.data.page + 1
         });
+
+        // 标记首次加载完成
+        this._initialLoaded = true;
       } else {
         this.setData({ loading: false, hasMore: false });
+        // 标记首次加载完成（即使没有数据）
+        this._initialLoaded = true;
       }
 
       wx.hideLoading();
     } catch (err) {
       console.error('加载考试记录失败:', err);
       this.setData({ loading: false, hasMore: false });
+      // 标记首次加载完成（即使失败）
+      this._initialLoaded = true;
       wx.hideLoading();
     }
   },

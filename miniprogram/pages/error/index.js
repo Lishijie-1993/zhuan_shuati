@@ -9,21 +9,29 @@ Page({
     loading: true
   },
 
+  // 标记是否已完成首次加载
+  _initialLoaded: false,
+
   onLoad() {
     this.loadErrors();
   },
 
-  // 错题页面每次进入都需要刷新
+  // 错题页面：只在首次加载时获取数据，返回时保持滚动位置
   onShow() {
-    // 添加加载状态检查，避免重复请求
-    if (!this.data.loading) {
+    // 如果已完成首次加载，从子页面返回时不再刷新，避免滚动位置重置
+    // 用户可以通过下拉刷新来手动刷新数据
+    if (!this._initialLoaded) {
       this.loadErrors();
     }
   },
 
   // 从云函数加载错题数据
   async loadErrors() {
+    // 如果正在加载中，跳过
+    if (this.data.loading) return;
+
     try {
+      this.setData({ loading: true });
       wx.showLoading({ title: '加载中...' });
 
       const res = await cloud.call('getQuestions', { mode: 'error', limit: 100 });
@@ -41,6 +49,9 @@ Page({
           loading: false
         });
       }
+
+      // 标记首次加载完成
+      this._initialLoaded = true;
 
       wx.hideLoading();
     } catch (err) {

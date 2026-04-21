@@ -19,6 +19,8 @@ Page({
 
   // 页面挂载标记，用于防止内存泄漏
   _isMounted: true,
+  // 标记是否刚从子页面返回（避免刷新导致滚动位置重置）
+  _returningFromChild: false,
 
   onLoad() {
     this._isMounted = true;
@@ -33,8 +35,13 @@ Page({
     }
   },
 
-  // 收藏页面每次进入都需要刷新，因为可能有新增/删除收藏
+  // 收藏页面：智能刷新，避免从子页面返回时刷新导致滚动位置重置
   onShow() {
+    // 如果是从子页面返回，不刷新数据，保持滚动位置
+    if (this._returningFromChild) {
+      this._returningFromChild = false;
+      return;
+    }
     // 仅在数据为空时加载，避免每次切换 tab 都重新加载
     if (this.data.favorites.length === 0 && !this.data.loading) {
       this.resetAndLoad();
