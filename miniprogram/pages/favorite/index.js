@@ -33,8 +33,12 @@ Page({
     }
   },
 
+  // 收藏页面每次进入都需要刷新，因为可能有新增/删除收藏
   onShow() {
-    this.resetAndLoad();
+    // 仅在数据为空时加载，避免每次切换 tab 都重新加载
+    if (this.data.favorites.length === 0 && !this.data.loading) {
+      this.resetAndLoad();
+    }
   },
 
   // 重置并重新加载

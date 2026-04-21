@@ -8,14 +8,19 @@ Page({
   },
 
   onLoad() {
+    // 仅在 onLoad 时请求数据，onShow 不再重复请求
     this.fetchPaperList();
   },
 
-  onShow() {
-    this.fetchPaperList();
-  },
+  // onShow 仅用于页面从其他页面返回时刷新状态，不需要重新请求数据
+  // 数据刷新交给下拉刷新或其他用户触发的操作
 
   fetchPaperList() {
+    // 如果正在加载中或已有数据且不需要刷新，跳过
+    if (this.data.loading === false && this.data.paperList.length > 0) {
+      return;
+    }
+
     // 模拟数据作为兜底
     const mockData = [
       { id: 1, title: '水利安全员A证模拟考试卷一', questionCount: 100, duration: 90, totalScore: 100 },

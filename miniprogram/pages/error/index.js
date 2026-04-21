@@ -13,8 +13,12 @@ Page({
     this.loadErrors();
   },
 
+  // 错题页面每次进入都需要刷新
   onShow() {
-    this.loadErrors();
+    // 添加加载状态检查，避免重复请求
+    if (!this.data.loading) {
+      this.loadErrors();
+    }
   },
 
   // 从云函数加载错题数据

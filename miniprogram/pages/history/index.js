@@ -18,14 +18,18 @@ Page({
     this.loadHistory();
   },
 
+  // 历史记录页面每次进入都需要刷新
   onShow() {
-    this.setData({ 
-      page: 1, 
-      historyList: [], 
-      hasMore: true, 
-      loading: false 
-    });
-    this.loadHistory();
+    // 添加加载状态检查，避免重复请求
+    if (!this.data.loading && this.data.historyList.length === 0) {
+      this.setData({ 
+        page: 1, 
+        historyList: [], 
+        hasMore: true, 
+        loading: false 
+      });
+      this.loadHistory();
+    }
   },
 
   async loadHistory() {

@@ -7,16 +7,16 @@ Page({
     rankList: [],
     myRank: null,
     weekCount: 0,
-    todayCount: 0
+    todayCount: 0,
+    loading: false
   },
 
   onLoad(options) {
     this.loadRankData();
   },
 
-  onShow() {
-    this.loadRankData();
-  },
+  // 排行榜数据更新频率要求不高，不需要在 onShow 中重复请求
+  // 用户可以通过下拉刷新来更新数据
 
   // Tab 切换
   switchTab(e) {

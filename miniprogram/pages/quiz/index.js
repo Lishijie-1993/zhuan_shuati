@@ -16,9 +16,22 @@ Page({
     analysisText: '',
     options: [],
     currentQuestionText: '',
-    questions: [],
-    statusBarHeight: 20  // 状态栏高度，默认值
+    currentQuestionId: '',  // 当前题目ID，用于追踪
+    questions: [],  // 保留用于翻页，但不包含完整题目数据
+    // 不再存储完整题目列表以减少setData数据量
+    statusBarHeight: 20,  // 状态栏高度，默认值
+    // 答题历史记录，用于保留每道题的答案
+    answerHistory: {},  // { questionId: { answer: 'A', timestamp: 123456 } }
+    // 已答题目列表（用于快速判断是否已答）
+    answeredQuestions: {}  // { questionId: true }
   },
+
+  // 答题历史记录相关变量
+  _answerHistory: {},
+  // syncProgress 防抖定时器
+  _syncProgressTimer: null,
+  // 防抖延迟时间（毫秒）
+  _SYNC_DEBOUNCE_MS: 2000,
 
   onLoad(options) {
     // 标记页面已挂载，用于防止内存泄漏
@@ -29,6 +42,9 @@ Page({
     const statusBarHeight = systemInfo.statusBarHeight || 20;
 
     this.setData({ statusBarHeight });
+
+    // 从本地缓存恢复答题历史
+    this._restoreAnswerHistory();
 
     if (options.mode === 'error') {
       // 错题练习模式
@@ -60,6 +76,12 @@ Page({
       clearTimeout(this._autoNextTimer);
       this._autoNextTimer = null;
     }
+    if (this._syncProgressTimer) {
+      clearTimeout(this._syncProgressTimer);
+      this._syncProgressTimer = null;
+    }
+    // 保存答题历史到本地缓存
+    this._saveAnswerHistory();
   },
 
   onShow() {
@@ -84,9 +106,10 @@ Page({
           options: firstQ.options,
           correctAnswer: firstQ.correctAnswer,
           analysisText: firstQ.analysis,
+          currentQuestionId: firstQ.id,
           currentIndex: 0,
-          userAnswer: null,
-          userAnswers: {}
+          userAnswer: this._getHistoryAnswer(firstQ.id) || null,
+          userAnswers: firstQ.type === 'multiple' ? { [firstQ.id]: this._getHistoryAnswer(firstQ.id) || [] } : {}
         });
 
         this.checkFavoriteStatus();
@@ -99,7 +122,7 @@ Page({
     }
   },
 
-  // 加载题目列表
+  // 加载题目列表（优化：只存储必要数据，减少setData量）
   async loadQuestions() {
     try {
       wx.showLoading({ title: '加载中...' });
@@ -122,9 +145,10 @@ Page({
           options: firstQ.options,
           correctAnswer: firstQ.correctAnswer,
           analysisText: firstQ.analysis,
+          currentQuestionId: firstQ.id,
           currentIndex: 0,
-          userAnswer: null,
-          userAnswers: {}
+          userAnswer: this._getHistoryAnswer(firstQ.id) || null,
+          userAnswers: firstQ.type === 'multiple' ? { [firstQ.id]: this._getHistoryAnswer(firstQ.id) || [] } : {}
         });
 
         this.checkFavoriteStatus();
@@ -158,18 +182,84 @@ Page({
       }
     ];
 
+    const firstQ = mockQuestions[0];
     this.setData({
       questions: mockQuestions,
       totalQuestions: mockQuestions.length,
-      currentQuestionText: mockQuestions[0].content,
-      options: mockQuestions[0].options,
-      correctAnswer: mockQuestions[0].correctAnswer,
-      analysisText: mockQuestions[0].analysis,
-      userAnswer: null,
-      userAnswers: {}
+      currentQuestionText: firstQ.content,
+      options: firstQ.options,
+      correctAnswer: firstQ.correctAnswer,
+      analysisText: firstQ.analysis,
+      currentQuestionId: firstQ.id,
+      currentIndex: 0,
+      userAnswer: this._getHistoryAnswer(firstQ.id) || null,
+      userAnswers: firstQ.type === 'multiple' ? { [firstQ.id]: this._getHistoryAnswer(firstQ.id) || [] } : {}
     });
 
     this.checkFavoriteStatus();
+  },
+
+  // 从本地缓存恢复答题历史
+  _restoreAnswerHistory() {
+    try {
+      const userScopedKey = getUserScopedKey('answerHistory');
+      const saved = wx.getStorageSync(userScopedKey);
+      if (saved && typeof saved === 'object') {
+        this._answerHistory = saved;
+        this.setData({ answerHistory: saved });
+      }
+    } catch (e) {
+      console.error('恢复答题历史失败:', e);
+    }
+  },
+
+  // 保存答题历史到本地缓存
+  _saveAnswerHistory() {
+    try {
+      const userScopedKey = getUserScopedKey('answerHistory');
+      wx.setStorageSync(userScopedKey, this._answerHistory);
+    } catch (e) {
+      console.error('保存答题历史失败:', e);
+    }
+  },
+
+  // 记录答案到历史
+  _recordAnswer(questionId, answer, isMultiple = false) {
+    if (!questionId) return;
+    this._answerHistory[questionId] = {
+      answer: answer,
+      isMultiple: isMultiple,
+      timestamp: Date.now()
+    };
+    // 标记已答
+    const answeredQuestions = { ...this.data.answeredQuestions, [questionId]: true };
+    this.setData({
+      answerHistory: this._answerHistory,
+      answeredQuestions
+    });
+  },
+
+  // 获取历史答案
+  _getHistoryAnswer(questionId) {
+    const record = this._answerHistory[questionId];
+    if (record) {
+      return record.isMultiple ? (record.answer || []) : record.answer;
+    }
+    return null;
+  },
+
+  // 防抖同步进度
+  _debouncedSyncProgress() {
+    if (this._syncProgressTimer) {
+      clearTimeout(this._syncProgressTimer);
+    }
+    this._syncProgressTimer = setTimeout(() => {
+      if (this._isMounted !== false) {
+        cloud.syncProgress(this.data.chapterTitle, this.data.currentIndex, 0)
+          .catch(err => console.error('同步进度失败:', err));
+      }
+      this._syncProgressTimer = null;
+    }, this._SYNC_DEBOUNCE_MS);
   },
 
   // 获取当前题目（带安全检查）
@@ -239,7 +329,7 @@ Page({
     // 背题模式下不处理
     if (this.data.mode === 'recite') return;
 
-    const questionId = currentQ.id;
+    const questionId = currentQ.id || this.data.currentQuestionId;
     let userAnswers = { ...this.data.userAnswers };
     let currentAns = userAnswers[questionId];
 
@@ -271,6 +361,9 @@ Page({
 
     this.setData({ userAnswer: selectedId });
 
+    // 记录答案到历史（用于保留翻页时的答案）
+    this._recordAnswer(currentQ.id, selectedId, false);
+
     // 答题正确，记录并报告（添加错误处理防止弱网雪崩）
     if (selectedId === this.data.correctAnswer) {
       // 同步进度到服务器
@@ -300,7 +393,7 @@ Page({
     const currentQ = this.getCurrentQuestion();
     if (!currentQ) return;
 
-    const questionId = currentQ.id;
+    const questionId = currentQ.id || this.data.currentQuestionId;
     const userAns = this.data.userAnswers[questionId] || [];
 
     // 判断是否答对（比较排序后的数组）
@@ -309,12 +402,15 @@ Page({
 
     const isCorrect = JSON.stringify(correctArr) === JSON.stringify(userArr);
 
+    // 记录答案到历史（用于保留翻页时的答案）
+    this._recordAnswer(questionId, userArr, true);
+
     // 记录进度（添加错误处理防止弱网雪崩）
     if (isCorrect) {
       cloud.syncProgress(this.data.chapterTitle, this.data.currentIndex, 1)
         .catch(err => console.error('同步进度失败:', err));
     } else {
-      cloud.reportError(currentQ.id, userAns.join(','))
+      cloud.reportError(currentQ.id, userArr.join(','))
         .catch(err => console.error('记录错题失败:', err));
     }
 
@@ -354,6 +450,7 @@ Page({
     }
   },
 
+  // 上一题（保留当前题目答案历史）
   prevQuestion() {
     if (this.data.questions.length === 0) {
       wx.showToast({ title: '暂无题目', icon: 'none' });
@@ -361,10 +458,17 @@ Page({
     }
     if (this.data.currentIndex > 0) {
       const newIndex = this.data.currentIndex - 1;
+      const prevQ = this.data.questions[newIndex];
+
+      // 获取上一题的之前答案（如果有的话）
+      const prevAnswer = this._getHistoryAnswer(prevQ.id);
+      const isMulti = prevQ.type === 'multiple';
+
       this.setData({
         currentIndex: newIndex,
-        userAnswer: null,
-        userAnswers: {}
+        currentQuestionId: prevQ.id,
+        userAnswer: prevAnswer || null,
+        userAnswers: isMulti ? { [prevQ.id]: prevAnswer || [] } : {}
       }, () => {
         this.updateQuestionData();
       });
@@ -373,6 +477,7 @@ Page({
     }
   },
 
+  // 下一题（保留当前题目答案历史）
   nextQuestion() {
     if (this.data.questions.length === 0) {
       wx.showToast({ title: '暂无题目', icon: 'none' });
@@ -380,10 +485,17 @@ Page({
     }
     if (this.data.currentIndex < this.data.totalQuestions - 1) {
       const newIndex = this.data.currentIndex + 1;
+      const nextQ = this.data.questions[newIndex];
+
+      // 获取下一题的之前答案（如果有的话）
+      const nextAnswer = this._getHistoryAnswer(nextQ.id);
+      const isMulti = nextQ.type === 'multiple';
+
       this.setData({
         currentIndex: newIndex,
-        userAnswer: null,
-        userAnswers: {}
+        currentQuestionId: nextQ.id,
+        userAnswer: nextAnswer || null,
+        userAnswers: isMulti ? { [nextQ.id]: nextAnswer || [] } : {}
       }, () => {
         this.updateQuestionData();
       });
@@ -404,9 +516,8 @@ Page({
       analysisText: currentQ.analysis || '暂无解析'
     });
 
-    // 同步进度（添加错误处理防止弱网雪崩）
-    cloud.syncProgress(this.data.chapterTitle, this.data.currentIndex, 0)
-      .catch(err => console.error('同步进度失败:', err));
+    // 使用防抖的进度同步（每2秒最多同步一次）
+    this._debouncedSyncProgress();
 
     // 检查收藏状态
     this.checkFavoriteStatus();

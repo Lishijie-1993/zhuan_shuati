@@ -32,7 +32,7 @@
 
     <view class="options-list">
       <view
-        class="option-item {{helper.isSelected(userAnswers[questions[currentIndex].id], item.id) ? 'selected' : ''}} {{ (mode === 'recite' && helper.isCorrect(item.id, correctAnswer)) || (mode === 'answer' && userAnswer !== null && helper.isCorrect(item.id, correctAnswer)) ? 'active-correct' : '' }} {{ mode === 'answer' && userAnswer !== null && helper.isCorrect(item.id, correctAnswer) === false && helper.isUserWrong(userAnswers[questions[currentIndex].id], item.id) ? 'active-error' : '' }}"
+        class="option-item {{helper.isSelected(userAnswers[currentQuestionId], item.id) ? 'selected' : ''}} {{ (mode === 'recite' && helper.isCorrect(item.id, correctAnswer)) || (mode === 'answer' && userAnswer !== null && helper.isCorrect(item.id, correctAnswer)) ? 'active-correct' : '' }} {{ mode === 'answer' && userAnswer !== null && helper.isCorrect(item.id, correctAnswer) === false && helper.isUserWrong(userAnswers[currentQuestionId], item.id) ? 'active-error' : '' }}"
         wx:for="{{options}}"
         wx:key="id"
         bindtap="selectOption"
@@ -42,12 +42,12 @@
 
         <icon wx:if="{{ (mode === 'recite' && helper.isCorrect(item.id, correctAnswer)) || (mode === 'answer' && userAnswer !== null && helper.isCorrect(item.id, correctAnswer)) }}" type="success" size="18" color="#07C160"></icon>
 
-        <icon wx:if="{{ mode === 'answer' && userAnswer !== null && helper.isCorrect(item.id, correctAnswer) === false && helper.isUserWrong(userAnswers[questions[currentIndex].id], item.id) }}" type="warn" size="18" color="#FA5151"></icon>
+        <icon wx:if="{{ mode === 'answer' && userAnswer !== null && helper.isCorrect(item.id, correctAnswer) === false && helper.isUserWrong(userAnswers[currentQuestionId], item.id) }}" type="warn" size="18" color="#FA5151"></icon>
       </view>
     </view>
 
     <!-- 多选题提交按钮 -->
-    <view class="multiple-submit" wx:if="{{questions[currentIndex].type === 'multiple' && !userAnswer && userAnswers[questions[currentIndex].id] && userAnswers[questions[currentIndex].id].length > 0}}">
+    <view class="multiple-submit" wx:if="{{questions[currentIndex].type === 'multiple' && !userAnswer && userAnswers[currentQuestionId] && userAnswers[currentQuestionId].length > 0}}">
       <button class="btn-submit" bindtap="submitMultipleChoice">确认答案</button>
     </view>
 
@@ -101,8 +101,9 @@
     isSelected: function(userAnswers, optionId) {
       if (!userAnswers) return false;
       if (typeof userAnswers === 'string') return userAnswers === optionId;
-      // WXS 不支持 Array.isArray，使用 toString.call 判断
-      if (toString.call(userAnswers) === '[object Array]') {
+      // WXS 不支持 Array.isArray、toString、Object
+      // 使用数组方法判断：数组有 indexOf 方法
+      if (typeof userAnswers.indexOf === 'function') {
         return userAnswers.indexOf(optionId) > -1;
       }
       return false;
@@ -120,8 +121,9 @@
         }
         return correctAnswer === optionId;
       }
-      // WXS 不支持 Array.isArray，使用 toString.call 判断
-      if (toString.call(correctAnswer) === '[object Array]') {
+      // WXS 不支持 Array.isArray、toString、Object
+      // 使用数组方法判断：数组有 indexOf 方法
+      if (typeof correctAnswer.indexOf === 'function') {
         return correctAnswer.indexOf(optionId) > -1;
       }
       return false;
