@@ -5,8 +5,10 @@ Page({
   data: {
     paperId: null,
     paperTitle: '模拟考试',
-    // 视图层只存储必要的元数据，不存储巨型数组
+    // 视图层数据（当前题相关，避免全量数组导致性能问题）
     currentIndex: 0,
+    totalQuestions: 0,
+    currentQuestion: null,      // 当前题目对象，供 wxml 直接绑定
     userAnswers: {},
     timeLeft: 5400,
     timerText: "90:00",
@@ -21,6 +23,7 @@ Page({
   _examStarted: false,
   // 题目列表存储在内存变量中，不通过 setData 传递（避免巨型数组性能问题）
   _questions: [],
+  _currentIndex: 0,
 
   onLoad(options) {
     console.log('[exam] onLoad options:', options);
@@ -125,6 +128,8 @@ Page({
         });
         // 保存 duration 供后续使用
         this.examDuration = durationSeconds;
+        // 更新视图层当前题目数据
+        this._updateCurrentQuestion();
       } else {
         this.loadMockData();
       }
@@ -166,6 +171,8 @@ Page({
       timerText: this.formatTimeText(this.examDuration)
     });
     wx.showToast({ title: '使用模拟题目', icon: 'none' });
+    // 更新视图层当前题目数据
+    this._updateCurrentQuestion();
   },
 
   // 获取当前题目（从内存变量读取）
@@ -173,6 +180,17 @@ Page({
     if (!this._questions || this._questions.length === 0) return null;
     if (this._currentIndex < 0 || this._currentIndex >= this._questions.length) return null;
     return this._questions[this._currentIndex];
+  },
+
+  // 更新视图层当前题目数据（只传当前题，避免巨型数组问题）
+  _updateCurrentQuestion() {
+    const q = this._getCurrentQuestion();
+    if (!q) return;
+    this.setData({
+      currentQuestion: q,
+      currentIndex: this._currentIndex,
+      totalQuestions: this._questions.length
+    });
   },
 
   startTimer(resetTime = false) {
@@ -236,7 +254,7 @@ Page({
   prevQuestion() {
     if (this._currentIndex > 0) {
       this._currentIndex = this._currentIndex - 1;
-      this.setData({ currentIndex: this._currentIndex });
+      this._updateCurrentQuestion();
     } else {
       wx.showToast({ title: '已经是第一题了', icon: 'none' });
     }
@@ -245,7 +263,7 @@ Page({
   nextQuestion() {
     if (this._currentIndex < this._questions.length - 1) {
       this._currentIndex = this._currentIndex + 1;
-      this.setData({ currentIndex: this._currentIndex });
+      this._updateCurrentQuestion();
     } else {
       wx.showToast({ title: '已经是最后一题了', icon: 'none' });
     }

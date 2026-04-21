@@ -4,7 +4,7 @@
   <view class="status-bar">
     <view class="progress">
       <text class="current">{{currentIndex + 1}}</text>
-      <text class="total">/{{questions.length}}</text>
+      <text class="total">/{{totalQuestions}}</text>
     </view>
     <view class="timer {{timeLeft < 300 ? 'danger' : ''}}">
       <image class="icon-clock" src="/images/icons/clock.png" mode="aspectFit"></image>
@@ -12,19 +12,19 @@
     </view>
   </view>
 
-  <view class="question-card" wx:if="{{questions.length > 0}}">
+  <view class="question-card" wx:if="{{currentQuestion}}">
     <view class="q-header">
-      <text class="q-type">{{questions[currentIndex].type === 'single' ? '单选题' : (questions[currentIndex].type === 'multiple' ? '多选题' : '判断题')}}</text>
+      <text class="q-type">{{currentQuestion.type === 'single' ? '单选题' : (currentQuestion.type === 'multiple' ? '多选题' : '判断题')}}</text>
       <text class="q-score">分值：1分</text>
     </view>
     
-    <view class="q-title">{{questions[currentIndex].title}}</view>
+    <view class="q-title">{{currentQuestion.title}}</view>
 
     <view class="options-group">
       <view
-        wx:for="{{questions[currentIndex].options}}"
+        wx:for="{{currentQuestion.options}}"
         wx:key="id"
-        class="option-item {{helper.isSelected(userAnswers[questions[currentIndex].id], item.id) ? 'selected' : ''}}"
+        class="option-item {{helper.isSelected(userAnswers[currentQuestion.id], item.id) ? 'selected' : ''}}"
         bindtap="selectOption"
         data-key="{{item.id}}"
       >
@@ -35,14 +35,14 @@
   </view>
 
   <!-- 题库加载中或为空时的占位 -->
-  <view wx:if="{{questions.length === 0}}" class="loading-placeholder">
+  <view wx:if="{{!currentQuestion}}" class="loading-placeholder">
     <text>题目加载中...</text>
   </view>
 
   <view class="footer">
     <button class="btn-nav" bindtap="prevQuestion" disabled="{{currentIndex === 0}}">上一题</button>
     
-    <button wx:if="{{currentIndex === questions.length - 1}}" class="btn-submit" bindtap="submitExam">提交试卷</button>
+    <button wx:if="{{currentIndex === totalQuestions - 1}}" class="btn-submit" bindtap="submitExam">提交试卷</button>
     <button wx:else class="btn-nav primary" bindtap="nextQuestion">下一题</button>
   </view>
 </view>

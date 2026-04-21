@@ -9,28 +9,22 @@ Page({
     loading: true
   },
 
-  // 标记是否刚从子页面返回（用于 onShow 智能刷新判断）
-  _returningFromChild: false,
+
 
   onLoad() {
     this.loadErrors();
   },
 
-  // 错题页面：智能刷新策略
-  // - 首次加载 onLoad -> 加载数据
-  // - 从子页面返回 onShow -> 刷新数据（确保数据同步）
-  // - 用户可以通过下拉刷新手动刷新
+  
   onShow() {
-    if (this._returningFromChild) {
-      this._returningFromChild = false;
-      // 从子页面返回时刷新数据，确保数据同步
+    if (wx.getStorageSync('error_list_dirty')) {
       this.loadErrors();
+      wx.removeStorageSync('error_list_dirty'); // 刷新完清除脏标记
     }
   },
 
-  // 导航到子页面时标记
+
   viewError(e) {
-    this._returningFromChild = true;
     const questionId = e.currentTarget.dataset.id;
     wx.navigateTo({
       url: `/pages/quiz/index?id=${questionId}&mode=error`

@@ -37,6 +37,9 @@ Page({
   _syncProgressTimer: null,
   // 防抖延迟时间（毫秒）
   _SYNC_DEBOUNCE_MS: 2000,
+  // 答对计数累加器（用于解决 clearTimeout 后参数被覆盖的问题）
+  // 用户答对时 +1，翻页时不变化，定时器触发时用累加值同步后归零
+  _syncCorrectAccum: 0,
 
   onLoad(options) {
     // 标记页面已挂载，用于防止内存泄漏
@@ -267,23 +270,32 @@ Page({
     return null;
   },
 
-  // 防抖同步进度（修复：使用闭包捕获参数，避免 clearTimeout 后参数被覆盖）
+  // 防抖同步进度（修复：使用累加计数器，避免 clearTimeout 后参数被覆盖）
+  // 答对 -> _syncCorrectAccum++ -> 设 2s 定时器
+  // 翻页/其他 -> 不改变 _syncCorrectAccum -> 设/重设 2s 定时器
+  // 定时器触发 -> 用累加值同步 -> 清零累加器
+  // 无论翻页多快，累加的"答对数"都不会丢失
   _debouncedSyncProgress(correct = 0) {
-    // 如果已有定时器在运行，先清除旧的
-    if (this._syncProgressTimer) {
-      clearTimeout(this._syncProgressTimer);
-      this._syncProgressTimer = null;
+    // 累加答对计数（只增不减，直到定时器触发后归零）
+    if (correct > 0) {
+      this._syncCorrectAccum += correct;
     }
 
-    // 使用闭包捕获当前的 correct 参数值，避免后续调用覆盖
-    const capturedCorrect = correct;
+    // 重设/新建 2 秒防抖定时器
+    if (this._syncProgressTimer) {
+      clearTimeout(this._syncProgressTimer);
+    }
 
     this._syncProgressTimer = setTimeout(() => {
       this._syncProgressTimer = null;
-      if (this._isMounted !== false && capturedCorrect > 0) {
-        // 只有答对的情况下才同步进度（capturedCorrect > 0 表示这次调用是答题触发的）
-        cloud.syncProgress(this.data.chapterTitle, this.data.currentIndex, capturedCorrect)
-          .catch(err => console.error('同步进度失败:', err));
+      if (this._isMounted !== false && this._syncCorrectAccum > 0) {
+        // 用累加值同步，答对了几道就同步几道
+        cloud.syncProgress(this.data.chapterTitle, this.data.currentIndex, this._syncCorrectAccum)
+          .catch(err => console.error('同步进度失败:', err))
+          .finally(() => {
+            // 同步完成后归零，等待下一轮累加
+            this._syncCorrectAccum = 0;
+          });
       }
     }, this._SYNC_DEBOUNCE_MS);
   },
