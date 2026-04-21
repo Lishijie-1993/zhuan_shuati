@@ -17,6 +17,22 @@ Page({
     debugInfo: ''
   },
 
+  // 页面挂载标记，用于防止内存泄漏
+  _isMounted: true,
+
+  onLoad() {
+    this._isMounted = true;
+  },
+
+  onUnload() {
+    // 页面卸载时清理定时器，防止内存泄漏
+    this._isMounted = false;
+    if (this._autoNextTimer) {
+      clearTimeout(this._autoNextTimer);
+      this._autoNextTimer = null;
+    }
+  },
+
   onShow() {
     this.resetAndLoad();
   },
@@ -176,12 +192,15 @@ Page({
       console.log('[favorite] 答错了，正确答案是:', currentQuestion.correctAnswer);
     }
 
-    // 自动下一题
+    // 自动下一题（使用实例变量追踪定时器，防止内存泄漏）
     if (this.data.isAutoNext && optId === currentQuestion.correctAnswer) {
       console.log('[favorite] 答对了，自动下一题');
       if (this.data.currentIndex < this.data.favorites.length - 1) {
-        setTimeout(() => {
-          this.nextQuestion();
+        this._autoNextTimer = setTimeout(() => {
+          // 页面可能已卸载，需要检查
+          if (this._isMounted !== false) {
+            this.nextQuestion();
+          }
         }, 800);
       }
     }

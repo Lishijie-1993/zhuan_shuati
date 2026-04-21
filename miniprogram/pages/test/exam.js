@@ -15,6 +15,9 @@ Page({
     snapshotId: null
   },
 
+  // 提交锁：防止并发交卷导致的数据覆写冲突
+  _submitLock: false,
+
   onLoad(options) {
     console.log('[exam] onLoad options:', options);
 
@@ -185,75 +188,116 @@ Page({
       confirmColor: '#007AFF',
       success: (res) => {
         if (res.confirm) {
-          this.processResult();
+          // 使用安全的提交方法，防止并发冲突
+          this.safeProcessResult();
         }
       }
     });
+  },
+
+  // 安全的提交方法（带提交锁，防止并发冲突）
+  safeProcessResult() {
+    // 检查是否正在提交中，防止并发提交
+    if (this._submitLock) {
+      console.warn('检测到重复提交请求，已忽略');
+      return;
+    }
+
+    // 设置提交锁
+    this._submitLock = true;
+    
+    // 设置UI状态
+    this.setData({ isSubmitting: true });
+
+    // 执行实际的提交逻辑
+    this.processResult()
+      .catch(err => {
+        console.error('提交过程出现异常:', err);
+        // 确保异常情况下也释放锁
+        this._submitLock = false;
+        this.setData({ isSubmitting: false });
+      })
+      .finally(() => {
+        // processResult 完成后释放锁（正常情况由 processResult 内部处理）
+        // 这里做双重保险
+        setTimeout(() => {
+          this._submitLock = false;
+        }, 1000);
+      });
   },
 
   autoSubmit() {
     wx.showToast({ title: '考试时间到，已自动交卷', icon: 'none' });
-    this.processResult();
+    // 自动交卷也使用提交锁，防止与手动交卷冲突
+    this.safeProcessResult();
   },
 
   async processResult() {
-    clearInterval(this.timer);
-
-    let correctCount = 0;
-    this.data.questions.forEach(q => {
-      const userAns = this.data.userAnswers[q.id];
-      if (q.type === 'multiple') {
-        if (JSON.stringify(userAns || []) === JSON.stringify(q.answer)) {
-          correctCount++;
-        }
-      } else {
-        if (userAns === q.answer) {
-          correctCount++;
-        }
-      }
-    });
-
-    const totalQuestions = this.data.questions.length;
-    const score = Math.round((correctCount / totalQuestions) * 100);
-    // 计算实际用时（服务端会重新计算，这里只用于本地显示）
-    const totalTime = this.examDuration || this.data.timeLeft;
-    const timeUsed = Math.max(0, totalTime - this.data.timeLeft);
-
-    wx.showLoading({ title: '正在阅卷...' });
+    // 再次检查提交锁，双重保险
+    if (this._processingResult) {
+      console.warn('检测到重复处理，已忽略');
+      return;
+    }
+    this._processingResult = true;
 
     try {
-      // 只传递 snapshotId 和 answers，不传 timeUsed（服务端会计算）
-      const res = await cloud.submitPaper(
-        this.data.snapshotId || this.data.paperId,
-        this.data.userAnswers
-      );
+      clearInterval(this.timer);
 
-      wx.hideLoading();
-      wx.disableAlertBeforeUnload();
+      let correctCount = 0;
+      this.data.questions.forEach(q => {
+        const userAns = this.data.userAnswers[q.id];
+        if (q.type === 'multiple') {
+          if (JSON.stringify(userAns || []) === JSON.stringify(q.answer)) {
+            correctCount++;
+          }
+        } else {
+          if (userAns === q.answer) {
+            correctCount++;
+          }
+        }
+      });
 
-      // 云函数调用成功，使用返回的结果
-      if (res && res.success) {
-        wx.redirectTo({
-          url: `/pages/test/result?score=${res.score}&correct=${res.correctCount}&total=${res.totalQuestions}&paperId=${this.data.paperId}&recordId=${this.data.snapshotId || this.data.paperId}`
-        });
-      } else {
-        // 云函数返回失败，但可能是记录已存在，使用本地结果
-        console.warn('云函数返回失败，使用本地结果:', res);
-        // 创建本地兜底记录
+      const totalQuestions = this.data.questions.length;
+      const score = Math.round((correctCount / totalQuestions) * 100);
+      const totalTime = this.examDuration || this.data.timeLeft;
+      const timeUsed = Math.max(0, totalTime - this.data.timeLeft);
+
+      wx.showLoading({ title: '正在阅卷...' });
+
+      try {
+        const res = await cloud.submitPaper(
+          this.data.snapshotId || this.data.paperId,
+          this.data.userAnswers
+        );
+
+        wx.hideLoading();
+        wx.disableAlertBeforeUnload();
+
+        if (res && res.success) {
+          wx.redirectTo({
+            url: `/pages/test/result?score=${res.score}&correct=${res.correctCount}&total=${res.totalQuestions}&paperId=${this.data.paperId}&recordId=${this.data.snapshotId || this.data.paperId}`
+          });
+        } else {
+          console.warn('云函数返回失败，使用本地结果:', res);
+          await this.createLocalRecord(score, correctCount, totalQuestions, timeUsed);
+          wx.redirectTo({
+            url: `/pages/test/result?score=${score}&correct=${correctCount}&total=${totalQuestions}&paperId=${this.data.paperId}&recordId=${this.data.snapshotId || this.data.paperId}`
+          });
+        }
+      } catch (err) {
+        console.error('提交试卷失败:', err);
+        wx.hideLoading();
+        wx.disableAlertBeforeUnload();
         await this.createLocalRecord(score, correctCount, totalQuestions, timeUsed);
         wx.redirectTo({
           url: `/pages/test/result?score=${score}&correct=${correctCount}&total=${totalQuestions}&paperId=${this.data.paperId}&recordId=${this.data.snapshotId || this.data.paperId}`
         });
       }
-    } catch (err) {
-      console.error('提交试卷失败:', err);
-      wx.hideLoading();
-      wx.disableAlertBeforeUnload();
-      // 云函数调用异常，创建本地兜底记录
-      await this.createLocalRecord(score, correctCount, totalQuestions, timeUsed);
-      wx.redirectTo({
-        url: `/pages/test/result?score=${score}&correct=${correctCount}&total=${totalQuestions}&paperId=${this.data.paperId}&recordId=${this.data.snapshotId || this.data.paperId}`
-      });
+    } finally {
+      // 释放处理锁
+      this._processingResult = false;
+      this._submitLock = false;
+      this.setData({ isSubmitting: false });
     }
   },
 
