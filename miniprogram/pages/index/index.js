@@ -13,7 +13,43 @@ Page({
       { name: '我的错题', icon: '/images/icons/error.png', bgColor: '#F5F5F5' }, 
       { name: '刷知识点', icon: '/images/icons/history.png', bgColor: '#F0F7FF' }, 
       { name: '考试记录', icon: '/images/icons/notes.png', bgColor: '#F9F2FD' } 
-    ]
+    ],
+    // 【修复5】动态计算距离考试的天数
+    daysUntilExam: 0
+  },
+
+  /**
+   * 生命周期函数--监听页面加载
+   */
+  onLoad() {
+    // 【修复5】动态计算距离考试的天数（首次加载也触发）
+    this._calculateDaysUntilExam();
+  },
+
+  /**
+   * 生命周期函数--监听页面显示
+   * 每次切回首页都重新计算倒计时，确保跨午夜时天数自动更新
+   */
+  onShow() {
+    this._calculateDaysUntilExam();
+  },
+
+  /**
+   * 计算距离考试的天数
+   * 考试时间：2026年10月24日
+   */
+  _calculateDaysUntilExam() {
+    const examDate = new Date('2026-10-24');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    examDate.setHours(0, 0, 0, 0);
+    
+    const diffTime = examDate - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    this.setData({
+      daysUntilExam: diffDays > 0 ? diffDays : 0
+    });
   },
 
   /**

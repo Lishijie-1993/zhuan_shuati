@@ -10,9 +10,9 @@ exports.main = async (event, context) => {
   const openid = wxContext.OPENID;
 
   try {
-    // 查询用户是否已存在
+    // 查询用户是否已存在（_id 即用户的 openid）
     const userRes = await db.collection('users').where({
-      _openid: openid
+      _id: openid
     }).get();
 
     if (userRes.data.length > 0) {
@@ -35,10 +35,12 @@ exports.main = async (event, context) => {
       // 新用户，创建初始档案
       const now = new Date();
       const newUser = {
-        _openid: openid,
+        _id: openid,
         nickname: '安全学员',
         avatar: '/images/icons/user.png',
         total_questions: 0,
+        week_questions: 0,
+        today_questions: 0,
         continue_days: 0,
         favorites: 0,
         wrong_questions: 0,

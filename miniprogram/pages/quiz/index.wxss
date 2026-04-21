@@ -33,11 +33,13 @@ page {
 }
 
 .nav-back {
-  width: 64rpx;
-  height: 64rpx;
+  width: 88rpx;
+  height: 88rpx;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  padding-left: 10rpx;
+  box-sizing: border-box;
 }
 
 .back-icon {
@@ -170,11 +172,11 @@ page {
   color: #FA5151;
 }
 
-/* 多选题选中状态：紫色边框 */
-.option-item.selected {
-  background-color: #f5f0ff;
-  border-color: #9c27b0;
-  color: #9c27b0;
+/* 多选题选中状态：紫色边框，优先级最高（同时匹配 .option-item.active-correct/.active-error 时也能赢） */
+.option-item.selected.option-item {
+  background-color: #f5f0ff !important;
+  border-color: #9c27b0 !important;
+  color: #9c27b0 !important;
 }
 
 .option-label {

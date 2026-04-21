@@ -191,7 +191,7 @@ function normalizeAnswer(answer) {
 async function updateUserTotalQuestions(openid, count) {
   try {
     await db.collection('users').where({
-      _openid: openid
+      _id: openid
     }).update({
       data: {
         total_questions: _.inc(count),
@@ -207,7 +207,7 @@ async function updateUserTotalQuestions(openid, count) {
 async function checkMedals(openid) {
   try {
     const userRes = await db.collection('users').where({
-      _openid: openid
+      _id: openid
     }).get();
 
     if (userRes.data.length === 0) return;
@@ -240,7 +240,7 @@ async function checkMedals(openid) {
     // 如果有新勋章，使用原子操作添加
     if (newMedals.length > 0) {
       await db.collection('users').where({
-        _openid: openid
+        _id: openid
       }).update({
         data: {
           medals: _.addToSet(...newMedals),

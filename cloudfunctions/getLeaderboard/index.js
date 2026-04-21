@@ -31,9 +31,9 @@ exports.main = async (event, context) => {
       .limit(pageSize)
       .get();
 
-    // 获取当前用户信息
+    // 获取当前用户信息（_id 即用户的 openid）
     const myUserRes = await db.collection('users').where({
-      _openid: openid
+      _id: openid
     }).get();
 
     const myUser = myUserRes.data[0] || {};
@@ -70,7 +70,7 @@ exports.main = async (event, context) => {
       weekCount: user.week_questions || 0,
       todayCount: user.today_questions || 0,
       activeDays: user.continue_days || 0,
-      isMe: user._openid === openid
+      isMe: user._id === openid
     }));
 
     // 构建我的排名信息（包含并列信息）

@@ -13,7 +13,12 @@ Page({
       wrongQuestions: 0,
       medals: 0,
       continueDays: 0
-    }
+    },
+    // 【修复7】刷题记录数据
+    correctCount: 0,
+    wrongCount: 0,
+    correctRate: 0,
+    wrongRate: 0
   },
 
   onLoad(options) {
@@ -50,15 +55,31 @@ Page({
           setCurrentUserId(userRes.userInfo.id);
         }
 
+        // 【修复5】云端 total_questions 存的是"答对数"，非"总题数"
+        // 故 total = 答对数 + 错题数，避免出现负数或 0
+        const wrongCount = errorCount;
+        const correctCount = totalQuestions;
+        const actualTotal = correctCount + wrongCount;
+        const correctRate = actualTotal > 0 ? Math.round((correctCount / actualTotal) * 100) : 0;
+        const wrongRate = 100 - correctRate;
+
         const userInfo = {
           ...userRes.userInfo,
-          wrongQuestions: errorCount,
-          favorites: favoriteCount
+          wrongQuestions: wrongCount,
+          favorites: favoriteCount,
+          // 【修复5】前端 totalQuestions 改为展示"总题数"，而非云端的"答对数"
+          totalQuestions: actualTotal
         };
 
         // 使用用户隔离的存储键更新
         wx.setStorageSync(userScopedKey, userInfo);
-        this.setData({ userInfo });
+        this.setData({
+          userInfo,
+          correctCount,
+          wrongCount,
+          correctRate,
+          wrongRate
+        });
       } else if (cachedUser) {
         // 如果云函数返回失败，但有缓存，更新缓存中的数量
         const updatedUser = {
@@ -132,17 +153,6 @@ Page({
     wx.navigateTo({ url: '/pages/medals/index' });
   },
 
-  shareToFriend() {
-    wx.showShareMenu({
-      withShareTicket: true,
-      menus: ['shareAppMessage', 'shareTimeline']
-    });
-  },
-
-  goToFeedback() {
-    wx.showToast({ title: '功能开发中', icon: 'none' });
-  },
-
   goToAbout() {
     wx.showModal({
       title: '关于我们',
@@ -162,28 +172,17 @@ Page({
       content: '确定要退出登录吗？',
       success: (res) => {
         if (res.confirm) {
-          // 清除用户ID（这是最关键的，确保后续操作不会使用旧用户的数据）
+          // 清除用户ID，后续 getUserScopedKey 会自动分配新的 guest_ 时间戳 key
+          // 新用户重新登录时会自动拉取云端数据覆盖，不会串号
           clearCurrentUserId();
-          
-          // 清除所有本地存储（使用旧方式清除兼容）
+
+          // 清除旧版兼容存储
           wx.removeStorageSync(STORAGE_KEYS.USER_INFO);
           wx.removeStorageSync(STORAGE_KEYS.FAVORITES);
           wx.removeStorageSync(STORAGE_KEYS.ERRORS);
-          
-          // 清除用户隔离的存储（遍历可能的用户ID）
-          // 注意：由于已清除 _user_id，新的 getUserScopedKey 调用会使用 guest_ 时间戳
-          // 这里我们显式清除可能存在的隔离存储
-          try {
-            const timestamp = Date.now();
-            wx.removeStorageSync(`userInfo_${timestamp}`);
-            wx.removeStorageSync(`favorites_${timestamp}`);
-            wx.removeStorageSync(`errors_${timestamp}`);
-          } catch (e) {
-            // 忽略清除错误
-          }
-          
+
           wx.showToast({ title: '已退出登录', icon: 'success' });
-          
+
           // 刷新页面以更新状态
           this.loadUserInfo(true);
         }

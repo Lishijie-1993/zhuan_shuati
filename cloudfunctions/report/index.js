@@ -95,7 +95,7 @@ exports.main = async (event, context) => {
 async function updateUserErrorCount(openid, delta) {
   try {
     await db.collection('users').where({
-      _openid: openid
+      _id: openid
     }).update({
       data: {
         wrong_questions: _.inc(delta),

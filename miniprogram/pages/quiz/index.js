@@ -30,9 +30,10 @@ Page({
     answeredQuestions: {},  // { questionId: true }
     // 是否显示解析（独立于 userAnswer，避免触发答案高亮）
     showAnalysis: false,
-    // 【修复1】状态分离：hasSelected（已选择未提交）和 hasSubmitted（已提交，含白卷）
     hasSelected: false,  // 多选题：是否已选择但未提交
-    hasSubmitted: false   // 多选题：是否已提交（包括白卷提交）
+    hasSubmitted: false,   // 多选题：是否已提交（包括白卷提交）
+    // 【修复】用对象追踪选中状态（避免 WXS 遍历数组的兼容性问题）
+    selectedSet: {},  // { "A": true, "C": true } 用于 WXS 快速判断
   },
 
   // 答题历史记录相关变量
@@ -157,10 +158,10 @@ Page({
           userAnswer: null,  // 始终从 null 开始，避免历史答案干扰刷题体验
           userAnswers: { [firstQ.id]: isErrorMode ? (savedAnswer || (isMulti ? [] : null)) : (isMulti ? [] : null) },  // 错题模式恢复答案，其他模式清空
           showAnalysis: false,
-          hasSelected: false,  // 【修复1/2】重置选择状态
-          hasSubmitted: false   // 【修复2】重置提交状态
+          hasSelected: false,  // 重置选择状态
+          hasSubmitted: false,   // 重置提交状态
+          selectedSet: {}
         });
-
         this.checkFavoriteStatus();
       }
 
@@ -217,8 +218,9 @@ Page({
           userAnswer: null,  // 始终从 null 开始，避免历史答案干扰刷题体验
           userAnswers: { [firstQ.id]: isErrorMode ? (savedAnswer || (isMulti ? [] : null)) : (isMulti ? [] : null) },
           showAnalysis: false,
-          hasSelected: false,  // 【修复1/2】重置选择状态
-          hasSubmitted: false   // 【修复2】重置提交状态
+          hasSelected: false,  // 重置选择状态
+          hasSubmitted: false,   // 重置提交状态
+          selectedSet: {}
         });
 
         this.checkFavoriteStatus();
@@ -288,8 +290,9 @@ Page({
       userAnswer: null,  // 始终从 null 开始
       userAnswers: { [firstQ.id]: isMulti ? [] : null },
       showAnalysis: false,
-      hasSelected: false,  // 【修复1/2】重置选择状态
-      hasSubmitted: false   // 【修复2】重置提交状态
+      hasSelected: false,  // 重置选择状态
+      hasSubmitted: false,   // 重置提交状态
+      selectedSet: {}
     });
 
     this.checkFavoriteStatus();
@@ -441,8 +444,9 @@ Page({
       userAnswer: null,
       userAnswers: {},
       showAnalysis: false,
-      hasSelected: false,  // 【修复1/2】重置选择状态
-      hasSubmitted: false   // 【修复2】重置提交状态
+      hasSelected: false,
+      hasSubmitted: false,
+      selectedSet: {}
     });
   },
 
@@ -469,8 +473,7 @@ Page({
   handleMultipleChoice(selectedId, currentQ) {
     // 背题模式下不处理
     if (this.data.mode === 'recite') return;
-
-    // 【修复2】如果已提交答案，则不允许修改
+    // 如果已提交答案，则不允许修改
     if (this.data.hasSubmitted) return;
 
     const questionId = currentQ.id || this.data.currentQuestionId;
@@ -491,30 +494,16 @@ Page({
     }
 
     // 排序保持一致
-    userAnswers[questionId] = currentAns.sort();
+    const sortedAns = currentAns.sort();
+    userAnswers[questionId] = sortedAns;
 
-    // 【修复1/2/3】设置 hasSelected 表示"已选择但未提交"
-    // 使用防抖减少 setData 调用频率
-    this._pendingSelection = {
+    const selectedSet = {};
+    sortedAns.forEach(id => { selectedSet[id] = true; });
+    this.setData({
       userAnswers,
+      selectedSet: selectedSet,
       hasSelected: currentAns.length > 0
-    };
-
-    // 清除之前的防抖定时器
-    if (this._selectionDebounceTimer) {
-      clearTimeout(this._selectionDebounceTimer);
-    }
-
-    // 设置新的防抖定时器
-    this._selectionDebounceTimer = setTimeout(() => {
-      if (this._pendingSelection && this._isMounted !== false) {
-        this.setData({
-          userAnswers: this._pendingSelection.userAnswers,
-          hasSelected: this._pendingSelection.hasSelected
-        });
-        this._pendingSelection = null;
-      }
-    }, this._SELECTION_DEBOUNCE_MS);
+    });
   },
 
   // 处理单选题/判断题选择
@@ -532,7 +521,8 @@ Page({
     // 【修复3】只更新 userAnswers 用于显示选中态，不设置 userAnswer
     // userAnswer 只在"确认答案"后才设置
     this.setData({
-      userAnswers: { ...this.data.userAnswers, [questionId]: selectedId }
+      userAnswers: { ...this.data.userAnswers, [questionId]: selectedId },
+      selectedSet: { [selectedId]: true }
     });
   },
 
@@ -609,8 +599,9 @@ Page({
     // userAnswer 只在有选项时设置，无选项时为 null
     this.setData({
       userAnswer: userArr.length > 0 ? userArr.join(',') : null,
-      hasSelected: false,  // 清除选择状态
-      hasSubmitted: true   // 标记已提交
+      hasSelected: false,
+      hasSubmitted: true,
+      selectedSet: {}
     });
 
     // 自动下一题（使用实例变量追踪定时器）
@@ -677,8 +668,9 @@ Page({
         userAnswer: null,  // 始终设为 null，保证全新挑战体验
         userAnswers: { ...this.data.userAnswers, [prevQ.id]: isMulti ? [] : null },
         showAnalysis: false,
-        hasSelected: false,  // 【修复1/2】重置选择状态
-        hasSubmitted: false  // 【修复2】重置提交状态
+        hasSelected: false,
+        hasSubmitted: false,
+        selectedSet: {}
       }, () => {
         this.updateQuestionData();
       });
@@ -718,8 +710,9 @@ Page({
         userAnswer: null,  // 始终设为 null，保证全新挑战体验
         userAnswers: { ...this.data.userAnswers, [nextQ.id]: isMulti ? [] : null },
         showAnalysis: false,
-        hasSelected: false,  // 【修复1/2】重置选择状态
-        hasSubmitted: false  // 【修复2】重置提交状态
+        hasSelected: false,
+        hasSubmitted: false,
+        selectedSet: {}
       }, () => {
         this.updateQuestionData();
       });
@@ -784,22 +777,62 @@ Page({
     const currentQ = this.getCurrentQuestion();
     if (!currentQ) return;
 
+    // 【修复2】乐观更新：先更新本地状态并立即显示提示，再等网络请求
+    const newIsFavorited = !this.data.isFavorited;
+    this.setData({ isFavorited: newIsFavorited });
+
+    // 立即弹出文字提示（不等网络延迟）
+    if (newIsFavorited) {
+      wx.showToast({ title: '收藏成功', icon: 'success', duration: 1500 });
+    } else {
+      wx.showToast({ title: '已取消收藏', icon: 'none', duration: 1500 });
+    }
+
     try {
-      const action = this.data.isFavorited ? 'remove' : 'add';
+      const action = newIsFavorited ? 'add' : 'remove';
       const res = await cloud.toggleFavorite(currentQ.id, action);
 
       if (res) {
-        this.setData({ isFavorited: !this.data.isFavorited });
-
-        if (action === 'add') {
-          wx.showToast({ title: '收藏成功', icon: 'success' });
-        } else {
-          wx.showToast({ title: '已取消收藏', icon: 'none' });
-        }
+        // 同步更新本地缓存
+        this._syncFavoriteCache(currentQ.id, newIsFavorited);
+      } else {
+        // 请求失败，回滚状态
+        this.setData({ isFavorited: !newIsFavorited });
+        wx.showToast({ title: '操作失败', icon: 'none' });
       }
     } catch (err) {
       console.error('收藏操作失败:', err);
+      // 请求失败，回滚状态
+      this.setData({ isFavorited: !newIsFavorited });
       wx.showToast({ title: '操作失败，请重试', icon: 'none' });
+    }
+  },
+
+  // 【修复2】同步更新本地收藏缓存
+  _syncFavoriteCache(questionId, isFavorited) {
+    try {
+      const userScopedKey = getUserScopedKey('favorites');
+      let favorites = wx.getStorageSync(userScopedKey) || [];
+
+      if (isFavorited) {
+        // 添加收藏
+        const currentQ = this.getCurrentQuestion();
+        if (currentQ && !favorites.some(item => item.id === questionId)) {
+          favorites.push({
+            id: currentQ.id,
+            content: currentQ.content,
+            correctAnswer: currentQ.correctAnswer,
+            type: currentQ.type
+          });
+        }
+      } else {
+        // 移除收藏
+        favorites = favorites.filter(item => item.id !== questionId);
+      }
+
+      wx.setStorageSync(userScopedKey, favorites);
+    } catch (e) {
+      console.error('同步收藏缓存失败:', e);
     }
   },
 

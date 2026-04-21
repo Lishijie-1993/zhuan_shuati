@@ -1,5 +1,4 @@
 <view class="container">
-  <!-- 自定义导航栏 -->
   <view class="custom-nav">
     <view class="status-bar" style="height: {{statusBarHeight}}px;"></view>
     <view class="nav-content">
@@ -11,7 +10,6 @@
     </view>
   </view>
 
-  <!-- 模式切换 -->
   <view class="mode-switch">
     <view class="switch-container">
       <view class="mode-item {{mode === 'answer' ? 'active' : ''}}" bindtap="switchMode" data-mode="answer">答题模式</view>
@@ -32,7 +30,7 @@
 
     <view class="options-list">
       <view
-        class="option-item {{helper.isSelected(userAnswers[currentQuestionId], item.id) && (!userAnswer || hasSelected) ? 'selected' : ''}} {{ (mode === 'recite' && helper.isCorrect(item.id, correctAnswer)) || (mode === 'answer' && (userAnswer !== null || hasSubmitted) && helper.isCorrect(item.id, correctAnswer)) ? 'active-correct' : '' }} {{ mode === 'answer' && (userAnswer !== null || hasSubmitted) && helper.isCorrect(item.id, correctAnswer) === false && helper.isUserWrong(userAnswers[currentQuestionId], item.id) ? 'active-error' : '' }}"
+        class="option-item {{ helper.isSelected(selectedSet, item.id) && (!userAnswer || hasSelected) ? 'selected' : '' }} {{ (mode === 'recite' && helper.isCorrect(item.id, correctAnswer)) || (mode === 'answer' && (userAnswer !== null || hasSubmitted) && helper.isCorrect(item.id, correctAnswer)) ? 'active-correct' : '' }} {{ mode === 'answer' && (userAnswer !== null || hasSubmitted) && helper.isCorrect(item.id, correctAnswer) === false && helper.isSelected(selectedSet, item.id) ? 'active-error' : '' }}"
         wx:for="{{options}}"
         wx:key="id"
         bindtap="selectOption"
@@ -42,16 +40,14 @@
 
         <icon wx:if="{{ (mode === 'recite' && helper.isCorrect(item.id, correctAnswer)) || (mode === 'answer' && (userAnswer !== null || hasSubmitted) && helper.isCorrect(item.id, correctAnswer)) }}" type="success" size="18" color="#07C160"></icon>
 
-        <icon wx:if="{{ mode === 'answer' && (userAnswer !== null || hasSubmitted) && helper.isCorrect(item.id, correctAnswer) === false && helper.isUserWrong(userAnswers[currentQuestionId], item.id) }}" type="warn" size="18" color="#FA5151"></icon>
+        <icon wx:if="{{ mode === 'answer' && (userAnswer !== null || hasSubmitted) && helper.isCorrect(item.id, correctAnswer) === false && helper.isSelected(selectedSet, item.id) }}" type="warn" size="18" color="#FA5151"></icon>
       </view>
     </view>
 
-    <!-- 单选题确认按钮 -->
     <view class="single-submit" wx:if="{{currentQuestionType !== 'multiple' && !userAnswer && userAnswers[currentQuestionId]}}">
       <button class="btn-submit" bindtap="confirmSingleChoice">确认答案</button>
     </view>
 
-    <!-- 多选题提交按钮：使用 hasSelected 判断 -->
     <view class="multiple-submit" wx:if="{{currentQuestionType === 'multiple' && !userAnswer && hasSelected && userAnswers[currentQuestionId] && userAnswers[currentQuestionId].length > 0}}">
       <button class="btn-submit" bindtap="submitMultipleChoice">确认答案</button>
     </view>
@@ -102,44 +98,28 @@
 
 <wxs module="helper">
   module.exports = {
+    // 兼容判断是否为数组（WXS 不支持 Array.isArray，使用 constructor 属性判断最为安全）
+    isArray: function(value) {
+      return toString.call(value) === '[object Array]';
+    },
     // 检查选项是否被选中
-    isSelected: function(userAnswers, optionId) {
-      // 兼容处理：userAnswers 可能是 undefined, null, 字符串, 数组
-      if (userAnswers === undefined || userAnswers === null) return false;
-
-      // 统一转换为字符串进行比较
-      var normalizedOptionId = typeof optionId === 'string' ? optionId.toUpperCase() : String(optionId).toUpperCase();
-
+    // selectedSet: 对象 { "A": true }，多选用
+    // selectedSet: 字符串 'A'，单选用
+    isSelected: function(selectedSet, optionId) {
+      if (!selectedSet) return false;
+      var normalizedId = typeof optionId === 'string' ? optionId.toUpperCase() : String(optionId).toUpperCase();
       // 字符串：单选答案
-      if (typeof userAnswers === 'string') {
-        var normalizedUser = userAnswers.toUpperCase();
-        return normalizedUser === normalizedOptionId;
+      if (typeof selectedSet === 'string') {
+        return selectedSet.toUpperCase() === normalizedId;
       }
-
-      // 【修复1】WXS 中不使用 this，直接调用 isSelected 的逻辑
-      // 数组处理
-      if (typeof userAnswers.indexOf === 'function') {
-        try {
-          for (var i = 0; i < userAnswers.length; i++) {
-            var item = userAnswers[i];
-            var normalizedItem = typeof item === 'string' ? item.toUpperCase() : String(item).toUpperCase();
-            if (normalizedItem === normalizedOptionId) return true;
-          }
-          return false;
-        } catch (e) {
-          return false;
-        }
-      }
-
-      return false;
+      // 对象：多选 selectedSet
+      return !!(selectedSet[normalizedId] || selectedSet[optionId]);
     },
     // 检查选项是否正确答案（支持大小写不敏感比较，支持数字类型）
     isCorrect: function(optionId, correctAnswer) {
       if (!correctAnswer) return false;
-
       // 【修复4】统一转换为字符串再转大写，处理数字类型
       var normalizedOptionId = typeof optionId === 'string' ? optionId.toUpperCase() : String(optionId).toUpperCase();
-
       if (typeof correctAnswer === 'string') {
         if (correctAnswer.indexOf(',') > -1) {
           var parts = correctAnswer.split(',');
@@ -154,8 +134,8 @@
         return normalizedCorrect === normalizedOptionId;
       }
 
-      // 【修复4】数组处理，同时处理数字类型
-      if (typeof correctAnswer.indexOf === 'function') {
+      // 【修复1】数组处理：使用 WXS 兼容的 isArray 代替 Array.isArray
+      if (module.exports.isArray(correctAnswer)) {
         try {
           for (var j = 0; j < correctAnswer.length; j++) {
             var item = correctAnswer[j];
@@ -170,18 +150,16 @@
 
       return false;
     },
-    // 【修复1】检查用户是否选错了这个选项（不使用 this，避免 WXS 报错）
+    // 检查用户是否选错了这个选项（不使用 this，避免 WXS 报错）
     isUserWrong: function(userAnswers, optionId) {
-      // 直接使用 isSelected 的逻辑
       if (userAnswers === undefined || userAnswers === null) return false;
-
       var normalizedOptionId = typeof optionId === 'string' ? optionId.toUpperCase() : String(optionId).toUpperCase();
-
       if (typeof userAnswers === 'string') {
         return userAnswers.toUpperCase() === normalizedOptionId;
       }
 
-      if (typeof userAnswers.indexOf === 'function') {
+      // 【修复1】数组处理：使用 WXS 兼容的 isArray 代替 Array.isArray
+      if (module.exports.isArray(userAnswers)) {
         try {
           for (var i = 0; i < userAnswers.length; i++) {
             var item = userAnswers[i];
@@ -194,6 +172,19 @@
         }
       }
 
+      return false;
+    },
+    // 简单的数组包含判断（用于 selectedOptions.indexOf 替代）
+    arrayIncludes: function(arr, val) {
+      if (arr === undefined || arr === null) return false;
+      var normalizedVal = typeof val === 'string' ? val.toUpperCase() : String(val);
+      try {
+        for (var i = 0; i < arr.length; i++) {
+          var item = arr[i];
+          var normalizedItem = typeof item === 'string' ? item.toUpperCase() : String(item);
+          if (normalizedItem === normalizedVal) return true;
+        }
+      } catch (e) {}
       return false;
     }
   }

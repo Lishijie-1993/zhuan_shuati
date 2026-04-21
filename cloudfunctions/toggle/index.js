@@ -118,7 +118,7 @@ exports.main = async (event, context) => {
 async function updateUserFavoritesCount(openid, delta) {
   try {
     await db.collection('users').where({
-      _openid: openid
+      _id: openid
     }).update({
       data: {
         favorites: _.inc(delta),

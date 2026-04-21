@@ -52,7 +52,7 @@
   <view class="exam-left">
     <text class="exam-label">中级注册安全工程师考试</text>
     <view class="exam-days">
-      距考试还剩 <text class="days-highlight">187</text> 天
+      距考试还剩 <text class="days-highlight">{{daysUntilExam}}</text> 天
     </view>
   </view>
   <view class="exam-right">

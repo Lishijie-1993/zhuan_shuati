@@ -55,7 +55,8 @@ class CloudService {
   // ========== 刷题相关 ==========
 
   // 获取题目列表（包含答案和解析）
-  async getQuestions(chapter, mode, page = 1, limit = 10) {
+  // 【修复4】默认 limit 改为 100，确保能加载足够多的题目
+  async getQuestions(chapter, mode, page = 1, limit = 100) {
     return await this.call('getQuestions', { chapter, mode, page, limit, includeAnswer: true });
   }
 

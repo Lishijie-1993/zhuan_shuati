@@ -82,15 +82,20 @@ Page({
 
         console.log('[favorite] 收藏数据条数:', res.list.length, '总条数:', res.total);
 
+        // 【修复3】只有首次加载（page===1）才重置 currentIndex，
+        // 预加载下一页时保留当前位置，避免点击下一题后被跳回第 1 题
+        const nextPage = this.data.page === 1 ? 1 : this.data.page;
+        const savedIndex = this.data.page === 1 ? 0 : this.data.currentIndex;
+
         this.setData({
           favorites: newList,
-          currentIndex: 0,
+          currentIndex: savedIndex,
           loading: false,
           loadingMore: false,
           hasNext: res.hasNext !== false,
           hasMore: res.hasNext !== false,
           total: res.total || newList.length,
-          page: this.data.page + 1,
+          page: nextPage + 1,
           debugInfo: `加载成功，共 ${res.total} 条收藏`
         });
 
