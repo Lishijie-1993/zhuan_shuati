@@ -37,8 +37,6 @@ Page({
   _syncProgressTimer: null,
   // 防抖延迟时间（毫秒）
   _SYNC_DEBOUNCE_MS: 2000,
-  // 防抖锁：防止答对时频繁调用
-  _syncLock: false,
 
   onLoad(options) {
     // 标记页面已挂载，用于防止内存泄漏
@@ -269,22 +267,24 @@ Page({
     return null;
   },
 
-  // 防抖同步进度（全局防抖，限制每2秒最多调用一次）
+  // 防抖同步进度（修复：使用闭包捕获参数，避免 clearTimeout 后参数被覆盖）
   _debouncedSyncProgress(correct = 0) {
-    // 如果有锁在等待中，直接忽略
-    if (this._syncLock) return;
-
+    // 如果已有定时器在运行，先清除旧的
     if (this._syncProgressTimer) {
       clearTimeout(this._syncProgressTimer);
+      this._syncProgressTimer = null;
     }
 
+    // 使用闭包捕获当前的 correct 参数值，避免后续调用覆盖
+    const capturedCorrect = correct;
+
     this._syncProgressTimer = setTimeout(() => {
-      if (this._isMounted !== false) {
-        cloud.syncProgress(this.data.chapterTitle, this.data.currentIndex, correct)
+      this._syncProgressTimer = null;
+      if (this._isMounted !== false && capturedCorrect > 0) {
+        // 只有答对的情况下才同步进度（capturedCorrect > 0 表示这次调用是答题触发的）
+        cloud.syncProgress(this.data.chapterTitle, this.data.currentIndex, capturedCorrect)
           .catch(err => console.error('同步进度失败:', err));
       }
-      this._syncProgressTimer = null;
-      this._syncLock = false;
     }, this._SYNC_DEBOUNCE_MS);
   },
 
@@ -297,7 +297,7 @@ Page({
 
   // 检查收藏状态（使用用户隔离的存储）
   checkFavoriteStatus() {
-    if (this.data.questions.length === 0) return;
+    if (!this._questions || this._questions.length === 0) return;
 
     try {
       // 使用用户隔离的存储键，防止多用户数据串号
@@ -537,9 +537,6 @@ Page({
       correctAnswer: currentQ.correctAnswer,
       analysisText: currentQ.analysis || '暂无解析'
     });
-
-    // 使用防抖的进度同步（每2秒最多同步一次）
-    this._debouncedSyncProgress();
 
     // 检查收藏状态
     this.checkFavoriteStatus();

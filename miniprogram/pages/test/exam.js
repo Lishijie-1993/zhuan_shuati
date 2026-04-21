@@ -5,7 +5,7 @@ Page({
   data: {
     paperId: null,
     paperTitle: '模拟考试',
-    questions: [],
+    // 视图层只存储必要的元数据，不存储巨型数组
     currentIndex: 0,
     userAnswers: {},
     timeLeft: 5400,
@@ -19,6 +19,8 @@ Page({
   _submitLock: false,
   // 标记考试是否已开始（定时器是否需要运行）
   _examStarted: false,
+  // 题目列表存储在内存变量中，不通过 setData 传递（避免巨型数组性能问题）
+  _questions: [],
 
   onLoad(options) {
     console.log('[exam] onLoad options:', options);
@@ -102,7 +104,7 @@ Page({
     });
   },
 
-  // 从云函数加载试卷题目
+  // 从云函数加载试卷题目（优化：题目存储在内存变量中，不通过 setData 传递）
   async loadQuestions(paperId) {
     try {
       wx.showLoading({ title: '加载题目...' });
@@ -111,8 +113,11 @@ Page({
 
       if (res && res.success && res.questions && res.questions.length > 0) {
         const durationSeconds = (res.duration || 90) * 60;
+        // 题目存储到内存变量，不通过 setData 传递，避免巨型数组性能问题
+        this._questions = res.questions;
+        this._currentIndex = 0;
+        // 只设置视图层需要的必要数据
         this.setData({
-          questions: res.questions,
           timeLeft: durationSeconds,
           timerText: this.formatTimeText(durationSeconds),
           loading: false,
@@ -138,6 +143,7 @@ Page({
     return `${min}:${sec < 10 ? '0' + sec : sec}`;
   },
 
+  // 加载模拟数据（云函数不可用时）
   loadMockData() {
     const mockQuestions = [
       { id: '101', type: 'single', title: '根据《水利工程建设安全生产管理规定》，施工单位应当设立安全生产管理机构，配备（ ）安全生产管理人员。', options: [
@@ -150,14 +156,23 @@ Page({
         { id: 'A', text: '正确' }, { id: 'B', text: '错误' }
       ], answer: 'A' }
     ];
+    // 题目存储到内存变量，不通过 setData 传递
+    this._questions = mockQuestions;
+    this._currentIndex = 0;
     this.examDuration = 90 * 60; // 默认90分钟
     this.setData({ 
-      questions: mockQuestions, 
       loading: false,
       timeLeft: this.examDuration,
       timerText: this.formatTimeText(this.examDuration)
     });
     wx.showToast({ title: '使用模拟题目', icon: 'none' });
+  },
+
+  // 获取当前题目（从内存变量读取）
+  _getCurrentQuestion() {
+    if (!this._questions || this._questions.length === 0) return null;
+    if (this._currentIndex < 0 || this._currentIndex >= this._questions.length) return null;
+    return this._questions[this._currentIndex];
   },
 
   startTimer(resetTime = false) {
@@ -196,8 +211,10 @@ Page({
 
   selectOption(e) {
     const { key } = e.currentTarget.dataset;
-    const { questions, currentIndex, userAnswers } = this.data;
-    const currentQ = questions[currentIndex];
+    const currentQ = this._getCurrentQuestion();
+    if (!currentQ) return;
+
+    let userAnswers = { ...this.data.userAnswers };
     let currentAns = userAnswers[currentQ.id];
 
     if (currentQ.type === 'multiple') {
@@ -217,14 +234,20 @@ Page({
   },
 
   prevQuestion() {
-    if (this.data.currentIndex > 0) {
-      this.setData({ currentIndex: this.data.currentIndex - 1 });
+    if (this._currentIndex > 0) {
+      this._currentIndex = this._currentIndex - 1;
+      this.setData({ currentIndex: this._currentIndex });
+    } else {
+      wx.showToast({ title: '已经是第一题了', icon: 'none' });
     }
   },
 
   nextQuestion() {
-    if (this.data.currentIndex < this.data.questions.length - 1) {
-      this.setData({ currentIndex: this.data.currentIndex + 1 });
+    if (this._currentIndex < this._questions.length - 1) {
+      this._currentIndex = this._currentIndex + 1;
+      this.setData({ currentIndex: this._currentIndex });
+    } else {
+      wx.showToast({ title: '已经是最后一题了', icon: 'none' });
     }
   },
 
@@ -295,7 +318,8 @@ Page({
       }
 
       let correctCount = 0;
-      this.data.questions.forEach(q => {
+      // 从内存变量读取题目列表进行评分
+      this._questions.forEach(q => {
         const userAns = this.data.userAnswers[q.id];
         if (q.type === 'multiple') {
           if (JSON.stringify(userAns || []) === JSON.stringify(q.answer)) {
@@ -308,7 +332,7 @@ Page({
         }
       });
 
-      const totalQuestions = this.data.questions.length;
+      const totalQuestions = this._questions.length;
       const score = Math.round((correctCount / totalQuestions) * 100);
       const totalTime = this.examDuration || this.data.timeLeft;
       const timeUsed = Math.max(0, totalTime - this.data.timeLeft);
@@ -364,7 +388,8 @@ Page({
           snapshot_id: 'local_' + Date.now(),
           score: score,
           answers: this.data.userAnswers,
-          question_ids: this.data.questions.map(q => q.id),
+          // 从内存变量获取题目 ID 列表
+          question_ids: this._questions.map(q => q.id),
           start_time: new Date(Date.now() - timeUsed * 1000),
           submit_time: new Date(),
           status: 'completed',

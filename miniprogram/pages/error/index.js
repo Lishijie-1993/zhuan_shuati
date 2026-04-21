@@ -9,20 +9,32 @@ Page({
     loading: true
   },
 
-  // 标记是否已完成首次加载
-  _initialLoaded: false,
+  // 标记是否刚从子页面返回（用于 onShow 智能刷新判断）
+  _returningFromChild: false,
 
   onLoad() {
     this.loadErrors();
   },
 
-  // 错题页面：只在首次加载时获取数据，返回时保持滚动位置
+  // 错题页面：智能刷新策略
+  // - 首次加载 onLoad -> 加载数据
+  // - 从子页面返回 onShow -> 刷新数据（确保数据同步）
+  // - 用户可以通过下拉刷新手动刷新
   onShow() {
-    // 如果已完成首次加载，从子页面返回时不再刷新，避免滚动位置重置
-    // 用户可以通过下拉刷新来手动刷新数据
-    if (!this._initialLoaded) {
+    if (this._returningFromChild) {
+      this._returningFromChild = false;
+      // 从子页面返回时刷新数据，确保数据同步
       this.loadErrors();
     }
+  },
+
+  // 导航到子页面时标记
+  viewError(e) {
+    this._returningFromChild = true;
+    const questionId = e.currentTarget.dataset.id;
+    wx.navigateTo({
+      url: `/pages/quiz/index?id=${questionId}&mode=error`
+    });
   },
 
   // 从云函数加载错题数据
@@ -50,9 +62,6 @@ Page({
         });
       }
 
-      // 标记首次加载完成
-      this._initialLoaded = true;
-
       wx.hideLoading();
     } catch (err) {
       console.error('加载错题失败:', err);
@@ -77,13 +86,6 @@ Page({
   switchTab(e) {
     const tab = e.currentTarget.dataset.tab;
     this.setData({ activeTab: tab });
-  },
-
-  viewError(e) {
-    const questionId = e.currentTarget.dataset.id;
-    wx.navigateTo({
-      url: `/pages/quiz/index?id=${questionId}&mode=error`
-    });
   },
 
   retryErrors() {
