@@ -13,7 +13,7 @@ Page({
     currentIndex: 0,
     totalQuestions: 0,
     correctAnswer: '',
-    userAnswer: null,  // 用户最终确认的答案（单选题：字符串，多选题：逗号分隔字符串）
+    userAnswer: null,  // 用户最终确认的答案（提交后才有值）
     userAnswers: {},  // 所有题目的选择状态（对象：{ questionId: answer }）
     isFavorited: false,
     analysisText: '',
@@ -30,8 +30,9 @@ Page({
     answeredQuestions: {},  // { questionId: true }
     // 是否显示解析（独立于 userAnswer，避免触发答案高亮）
     showAnalysis: false,
-    // 【修复3】是否已提交答案（用于多选题白卷场景，空字符串也能触发解析显示）
-    hasSubmitted: false
+    // 【修复1】状态分离：hasSelected（已选择未提交）和 hasSubmitted（已提交，含白卷）
+    hasSelected: false,  // 多选题：是否已选择但未提交
+    hasSubmitted: false   // 多选题：是否已提交（包括白卷提交）
   },
 
   // 答题历史记录相关变量
@@ -47,6 +48,9 @@ Page({
   // 答对计数累加器（用于解决 clearTimeout 后参数被覆盖的问题）
   // 用户答对时 +1，翻页时不变化，定时器触发时用累加值同步后归零
   _syncCorrectAccum: 0,
+  // 【修复3】选项选择防抖定时器
+  _selectionDebounceTimer: null,
+  _SELECTION_DEBOUNCE_MS: 50,  // 50ms 防抖，避免快速点击时频繁 setData
 
   onLoad(options) {
     // 标记页面已挂载，用于防止内存泄漏
@@ -105,6 +109,10 @@ Page({
       clearTimeout(this._syncProgressTimer);
       this._syncProgressTimer = null;
     }
+    if (this._selectionDebounceTimer) {
+      clearTimeout(this._selectionDebounceTimer);
+      this._selectionDebounceTimer = null;
+    }
     // 保存答题历史到本地缓存
     this._saveAnswerHistory();
   },
@@ -148,7 +156,9 @@ Page({
           currentIndex: 0,
           userAnswer: null,  // 始终从 null 开始，避免历史答案干扰刷题体验
           userAnswers: { [firstQ.id]: isErrorMode ? (savedAnswer || (isMulti ? [] : null)) : (isMulti ? [] : null) },  // 错题模式恢复答案，其他模式清空
-          showAnalysis: false
+          showAnalysis: false,
+          hasSelected: false,  // 【修复1/2】重置选择状态
+          hasSubmitted: false   // 【修复2】重置提交状态
         });
 
         this.checkFavoriteStatus();
@@ -206,7 +216,9 @@ Page({
           currentIndex: 0,
           userAnswer: null,  // 始终从 null 开始，避免历史答案干扰刷题体验
           userAnswers: { [firstQ.id]: isErrorMode ? (savedAnswer || (isMulti ? [] : null)) : (isMulti ? [] : null) },
-          showAnalysis: false
+          showAnalysis: false,
+          hasSelected: false,  // 【修复1/2】重置选择状态
+          hasSubmitted: false   // 【修复2】重置提交状态
         });
 
         this.checkFavoriteStatus();
@@ -263,6 +275,7 @@ Page({
     // 【统一容错处理】支持多种字段名
     const analysisText = firstQ.analysis || firstQ.analysisText || firstQ.explanation || '暂无解析';
 
+    // 【修复2】MockData 模式下也不恢复历史答案，保证全新挑战体验
     this.setData({
       totalQuestions: this._questions.length,
       currentQuestionText: firstQ.content,
@@ -272,9 +285,11 @@ Page({
       currentQuestionId: firstQ.id,
       currentQuestionType: firstQ.type,
       currentIndex: 0,
-      userAnswer: initialAnswer,
-      userAnswers: { [firstQ.id]: savedAnswer || (isMulti ? [] : null) },
-      showAnalysis: false
+      userAnswer: null,  // 始终从 null 开始
+      userAnswers: { [firstQ.id]: isMulti ? [] : null },
+      showAnalysis: false,
+      hasSelected: false,  // 【修复1/2】重置选择状态
+      hasSubmitted: false   // 【修复2】重置提交状态
     });
 
     this.checkFavoriteStatus();
@@ -420,11 +435,14 @@ Page({
 
   switchMode(e) {
     const mode = e.currentTarget.dataset.mode;
+    // 【修复1/2】切换模式时重置所有状态
     this.setData({
       mode,
       userAnswer: null,
       userAnswers: {},
-      showAnalysis: false
+      showAnalysis: false,
+      hasSelected: false,  // 【修复1/2】重置选择状态
+      hasSubmitted: false   // 【修复2】重置提交状态
     });
   },
 
@@ -452,6 +470,9 @@ Page({
     // 背题模式下不处理
     if (this.data.mode === 'recite') return;
 
+    // 【修复2】如果已提交答案，则不允许修改
+    if (this.data.hasSubmitted) return;
+
     const questionId = currentQ.id || this.data.currentQuestionId;
     let userAnswers = { ...this.data.userAnswers };
     let currentAns = userAnswers[questionId];
@@ -472,7 +493,28 @@ Page({
     // 排序保持一致
     userAnswers[questionId] = currentAns.sort();
 
-    this.setData({ userAnswers });
+    // 【修复1/2/3】设置 hasSelected 表示"已选择但未提交"
+    // 使用防抖减少 setData 调用频率
+    this._pendingSelection = {
+      userAnswers,
+      hasSelected: currentAns.length > 0
+    };
+
+    // 清除之前的防抖定时器
+    if (this._selectionDebounceTimer) {
+      clearTimeout(this._selectionDebounceTimer);
+    }
+
+    // 设置新的防抖定时器
+    this._selectionDebounceTimer = setTimeout(() => {
+      if (this._pendingSelection && this._isMounted !== false) {
+        this.setData({
+          userAnswers: this._pendingSelection.userAnswers,
+          hasSelected: this._pendingSelection.hasSelected
+        });
+        this._pendingSelection = null;
+      }
+    }, this._SELECTION_DEBOUNCE_MS);
   },
 
   // 处理单选题/判断题选择
@@ -563,12 +605,12 @@ Page({
         .catch(err => console.error('记录错题失败:', err));
     }
 
-    // 【修复3】显示结果，使用 hasSubmitted 确保白卷也能显示解析
-    // userAnswer 设为特殊标记表示已提交，但不影响空字符串场景
-    const submittedAnswer = userArr.length > 0 ? userArr.join(',') : '__SUBMITTED__';
-    this.setData({ 
-      userAnswer: submittedAnswer,
-      hasSubmitted: true  // 标记已提交，用于触发解析显示
+    // 【修复2】显示结果，使用 hasSubmitted 确保白卷也能显示解析
+    // userAnswer 只在有选项时设置，无选项时为 null
+    this.setData({
+      userAnswer: userArr.length > 0 ? userArr.join(',') : null,
+      hasSelected: false,  // 清除选择状态
+      hasSubmitted: true   // 标记已提交
     });
 
     // 自动下一题（使用实例变量追踪定时器）
@@ -635,7 +677,8 @@ Page({
         userAnswer: null,  // 始终设为 null，保证全新挑战体验
         userAnswers: { ...this.data.userAnswers, [prevQ.id]: isMulti ? [] : null },
         showAnalysis: false,
-        hasSubmitted: false  // 【修复3】重置提交状态
+        hasSelected: false,  // 【修复1/2】重置选择状态
+        hasSubmitted: false  // 【修复2】重置提交状态
       }, () => {
         this.updateQuestionData();
       });
@@ -675,7 +718,8 @@ Page({
         userAnswer: null,  // 始终设为 null，保证全新挑战体验
         userAnswers: { ...this.data.userAnswers, [nextQ.id]: isMulti ? [] : null },
         showAnalysis: false,
-        hasSubmitted: false  // 【修复3】重置提交状态
+        hasSelected: false,  // 【修复1/2】重置选择状态
+        hasSubmitted: false  // 【修复2】重置提交状态
       }, () => {
         this.updateQuestionData();
       });

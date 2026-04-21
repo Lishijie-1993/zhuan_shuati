@@ -32,7 +32,7 @@
 
     <view class="options-list">
       <view
-        class="option-item {{helper.isSelected(userAnswers[currentQuestionId], item.id) && !userAnswer ? 'selected' : ''}} {{ (mode === 'recite' && helper.isCorrect(item.id, correctAnswer)) || (mode === 'answer' && userAnswer !== null && helper.isCorrect(item.id, correctAnswer)) ? 'active-correct' : '' }} {{ mode === 'answer' && userAnswer !== null && helper.isCorrect(item.id, correctAnswer) === false && helper.isUserWrong(userAnswers[currentQuestionId], item.id) ? 'active-error' : '' }}"
+        class="option-item {{helper.isSelected(userAnswers[currentQuestionId], item.id) && (!userAnswer || hasSelected) ? 'selected' : ''}} {{ (mode === 'recite' && helper.isCorrect(item.id, correctAnswer)) || (mode === 'answer' && (userAnswer !== null || hasSubmitted) && helper.isCorrect(item.id, correctAnswer)) ? 'active-correct' : '' }} {{ mode === 'answer' && (userAnswer !== null || hasSubmitted) && helper.isCorrect(item.id, correctAnswer) === false && helper.isUserWrong(userAnswers[currentQuestionId], item.id) ? 'active-error' : '' }}"
         wx:for="{{options}}"
         wx:key="id"
         bindtap="selectOption"
@@ -40,9 +40,9 @@
       >
         <text class="option-label">{{item.id}}. {{item.text}}</text>
 
-        <icon wx:if="{{ (mode === 'recite' && helper.isCorrect(item.id, correctAnswer)) || (mode === 'answer' && userAnswer !== null && helper.isCorrect(item.id, correctAnswer)) }}" type="success" size="18" color="#07C160"></icon>
+        <icon wx:if="{{ (mode === 'recite' && helper.isCorrect(item.id, correctAnswer)) || (mode === 'answer' && (userAnswer !== null || hasSubmitted) && helper.isCorrect(item.id, correctAnswer)) }}" type="success" size="18" color="#07C160"></icon>
 
-        <icon wx:if="{{ mode === 'answer' && userAnswer !== null && helper.isCorrect(item.id, correctAnswer) === false && helper.isUserWrong(userAnswers[currentQuestionId], item.id) }}" type="warn" size="18" color="#FA5151"></icon>
+        <icon wx:if="{{ mode === 'answer' && (userAnswer !== null || hasSubmitted) && helper.isCorrect(item.id, correctAnswer) === false && helper.isUserWrong(userAnswers[currentQuestionId], item.id) }}" type="warn" size="18" color="#FA5151"></icon>
       </view>
     </view>
 
@@ -51,8 +51,8 @@
       <button class="btn-submit" bindtap="confirmSingleChoice">确认答案</button>
     </view>
 
-    <!-- 多选题提交按钮 -->
-    <view class="multiple-submit" wx:if="{{currentQuestionType === 'multiple' && !userAnswer && userAnswers[currentQuestionId] && userAnswers[currentQuestionId].length > 0}}">
+    <!-- 多选题提交按钮：使用 hasSelected 判断 -->
+    <view class="multiple-submit" wx:if="{{currentQuestionType === 'multiple' && !userAnswer && hasSelected && userAnswers[currentQuestionId] && userAnswers[currentQuestionId].length > 0}}">
       <button class="btn-submit" bindtap="submitMultipleChoice">确认答案</button>
     </view>
 
