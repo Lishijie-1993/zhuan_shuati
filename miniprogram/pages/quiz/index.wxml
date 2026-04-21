@@ -32,7 +32,7 @@
 
     <view class="options-list">
       <view
-        class="option-item {{helper.isSelected(userAnswers[currentQuestionId], item.id) ? 'selected' : ''}} {{ (mode === 'recite' && helper.isCorrect(item.id, correctAnswer)) || (mode === 'answer' && userAnswer !== null && helper.isCorrect(item.id, correctAnswer)) ? 'active-correct' : '' }} {{ mode === 'answer' && userAnswer !== null && helper.isCorrect(item.id, correctAnswer) === false && helper.isUserWrong(userAnswers[currentQuestionId], item.id) ? 'active-error' : '' }}"
+        class="option-item {{helper.isSelected(userAnswers[currentQuestionId], item.id) && !userAnswer ? 'selected' : ''}} {{ (mode === 'recite' && helper.isCorrect(item.id, correctAnswer)) || (mode === 'answer' && userAnswer !== null && helper.isCorrect(item.id, correctAnswer)) ? 'active-correct' : '' }} {{ mode === 'answer' && userAnswer !== null && helper.isCorrect(item.id, correctAnswer) === false && helper.isUserWrong(userAnswers[currentQuestionId], item.id) ? 'active-error' : '' }}"
         wx:for="{{options}}"
         wx:key="id"
         bindtap="selectOption"
@@ -46,16 +46,21 @@
       </view>
     </view>
 
+    <!-- 单选题确认按钮 -->
+    <view class="single-submit" wx:if="{{currentQuestionType !== 'multiple' && !userAnswer && userAnswers[currentQuestionId]}}">
+      <button class="btn-submit" bindtap="confirmSingleChoice">确认答案</button>
+    </view>
+
     <!-- 多选题提交按钮 -->
     <view class="multiple-submit" wx:if="{{currentQuestionType === 'multiple' && !userAnswer && userAnswers[currentQuestionId] && userAnswers[currentQuestionId].length > 0}}">
       <button class="btn-submit" bindtap="submitMultipleChoice">确认答案</button>
     </view>
 
     <view class="swipe-tip">
-      {{currentQuestionType === 'multiple' ? '多选题：点击选项切换选中状态，确认后提交' : '左右滑动可切换上下题'}}{{isAutoNext ? '，答对自动下一题' : ''}}
+      {{currentQuestionType === 'multiple' ? '多选题' : '单选题'}}：点击选项{{currentQuestionType === 'multiple' ? '切换选中状态' : '选择答案'}}，确认后提交{{isAutoNext ? '，答对自动下一题' : ''}}
     </view>
 
-    <view class="analysis-box" wx:if="{{mode === 'recite' || userAnswer}}">
+    <view class="analysis-box" wx:if="{{mode === 'recite' || userAnswer || showAnalysis}}">
       <view class="analysis-header">
         <text class="analysis-title">试题解析</text>
         <text class="analysis-error" bindtap="onReportError">纠错</text>
@@ -99,18 +104,30 @@
   module.exports = {
     // 检查选项是否被选中
     isSelected: function(userAnswers, optionId) {
-      if (!userAnswers) return false;
-      if (typeof userAnswers === 'string') return userAnswers === optionId;
-      // WXS 不支持 Array.isArray、toString、Object
-      // 使用数组方法判断：数组有 indexOf 方法
-      if (typeof userAnswers.indexOf === 'function') {
-        return userAnswers.indexOf(optionId) > -1;
+      // 兼容处理：userAnswers 可能是 undefined, null, 字符串, 数组
+      if (userAnswers === undefined || userAnswers === null) return false;
+
+      // 字符串：单选答案
+      if (typeof userAnswers === 'string') {
+        return userAnswers === optionId;
       }
+
+      // 【修复5】使用 typeof indexOf 判断是否是数组（WXS 兼容）
+      if (typeof userAnswers.indexOf === 'function') {
+        // 安全调用 indexOf
+        try {
+          return userAnswers.indexOf(optionId) > -1;
+        } catch (e) {
+          return false;
+        }
+      }
+
       return false;
     },
     // 检查选项是否正确答案
     isCorrect: function(optionId, correctAnswer) {
       if (!correctAnswer) return false;
+
       if (typeof correctAnswer === 'string') {
         if (correctAnswer.indexOf(',') > -1) {
           var parts = correctAnswer.split(',');
@@ -121,11 +138,16 @@
         }
         return correctAnswer === optionId;
       }
-      // WXS 不支持 Array.isArray、toString、Object
-      // 使用数组方法判断：数组有 indexOf 方法
+
+      // 【修复5】使用 typeof indexOf 判断是否是数组（WXS 兼容）
       if (typeof correctAnswer.indexOf === 'function') {
-        return correctAnswer.indexOf(optionId) > -1;
+        try {
+          return correctAnswer.indexOf(optionId) > -1;
+        } catch (e) {
+          return false;
+        }
       }
+
       return false;
     },
     // 检查用户是否选错了这个选项

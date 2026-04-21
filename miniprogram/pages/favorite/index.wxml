@@ -1,5 +1,4 @@
 <view class="container">
-  <!-- 顶部导航栏 -->
   <view class="nav-bar">
     <view class="nav-left" bindtap="goBack">
       <text class="nav-back-icon">〈</text>
@@ -28,7 +27,6 @@
     </view>
   </view>
 
-  <!-- 直接渲染当前题目 -->
   <scroll-view scroll-y class="quiz-container" wx:else>
     <view class="question-card">
       <view class="question-info">
@@ -53,7 +51,7 @@
         </view>
       </view>
 
-      <view class="analysis-box" wx:if="{{mode === 'recite' || userAnswers[favorites[currentIndex].id]}}">
+      <view class="analysis-box" wx:if="{{mode === 'recite' || userAnswers[favorites[currentIndex].id] || showAnalysisMap[favorites[currentIndex].id]}}">
         <view class="analysis-header">
           <text class="analysis-title">试题解析</text>
         </view>

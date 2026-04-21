@@ -188,10 +188,16 @@ page {
   margin: 30rpx 0;
 }
 
+/* 单选题提交按钮 */
+.single-submit {
+  text-align: center;
+  margin: 30rpx 0;
+}
+
 .btn-submit {
   display: inline-block;
   padding: 20rpx 60rpx;
-  background-color: #9c27b0;
+  background-color: #2D5CF6;
   color: #fff;
   border-radius: 40rpx;
   font-size: 30rpx;
