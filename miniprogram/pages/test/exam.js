@@ -148,18 +148,31 @@ Page({
     return `${min}:${sec < 10 ? '0' + sec : sec}`;
   },
 
+  // 标准化答案数组（用于多选题比较，支持大小写不敏感）
+  normalizeAnswerArray(answer) {
+    if (!answer) return [];
+    if (Array.isArray(answer)) return answer.map(a => String(a).trim().toUpperCase()).sort();
+    if (typeof answer === 'string') {
+      if (answer.includes(',')) {
+        return answer.split(',').map(s => s.trim().toUpperCase()).sort();
+      }
+      return answer.split('').map(s => s.trim().toUpperCase()).filter(s => s).sort();
+    }
+    return [String(answer).toUpperCase()];
+  },
+
   // 加载模拟数据（云函数不可用时）
   loadMockData() {
     const mockQuestions = [
       { id: '101', type: 'single', title: '根据《水利工程建设安全生产管理规定》，施工单位应当设立安全生产管理机构，配备（ ）安全生产管理人员。', options: [
         { id: 'A', text: '专职' }, { id: 'B', text: '兼职' }, { id: 'C', text: '临时' }, { id: 'D', text: '派驻' }
-      ], answer: 'A' },
+      ], correctAnswer: 'A', analysis: '专职安全生产管理人员是施工单位必须配备的安全管理人员。' },
       { id: '102', type: 'multiple', title: '以下属于特种作业人员的有（ ）。', options: [
         { id: 'A', text: '电工' }, { id: 'B', text: '焊工' }, { id: 'C', text: '起重信号工' }, { id: 'D', text: '普通力工' }
-      ], answer: ['A', 'B', 'C'] },
+      ], correctAnswer: ['A', 'B', 'C'], analysis: '特种作业人员包括电工、焊工、起重信号工等。' },
       { id: '103', type: 'judge', title: '安全生产责任制是施工单位安全管理的核心。', options: [
         { id: 'A', text: '正确' }, { id: 'B', text: '错误' }
-      ], answer: 'A' }
+      ], correctAnswer: 'A', analysis: '安全生产责任制确实是施工单位安全管理的核心制度。' }
     ];
     // 题目存储到内存变量，不通过 setData 传递
     this._questions = mockQuestions;
@@ -339,12 +352,18 @@ Page({
       // 从内存变量读取题目列表进行评分
       this._questions.forEach(q => {
         const userAns = this.data.userAnswers[q.id];
+        // 【字段统一】使用 correctAnswer 字段进行比较
+        const correctAnswer = q.correctAnswer;
         if (q.type === 'multiple') {
-          if (JSON.stringify(userAns || []) === JSON.stringify(q.answer)) {
+          // 多选题：比较排序后的数组
+          const correctArr = this.normalizeAnswerArray(correctAnswer);
+          const userArr = (userAns || []).sort();
+          if (JSON.stringify(correctArr) === JSON.stringify(userArr)) {
             correctCount++;
           }
         } else {
-          if (userAns === q.answer) {
+          // 单选题/判断题
+          if (userAns === correctAnswer) {
             correctCount++;
           }
         }

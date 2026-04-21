@@ -54,9 +54,9 @@ class CloudService {
 
   // ========== 刷题相关 ==========
 
-  // 获取题目列表
+  // 获取题目列表（包含答案和解析）
   async getQuestions(chapter, mode, page = 1, limit = 10) {
-    return await this.call('getQuestions', { chapter, mode, page, limit });
+    return await this.call('getQuestions', { chapter, mode, page, limit, includeAnswer: true });
   }
 
   // 同步刷题进度

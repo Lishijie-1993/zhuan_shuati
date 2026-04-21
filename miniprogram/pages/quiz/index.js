@@ -29,7 +29,9 @@ Page({
     // 已答题目列表（用于快速判断是否已答）
     answeredQuestions: {},  // { questionId: true }
     // 是否显示解析（独立于 userAnswer，避免触发答案高亮）
-    showAnalysis: false
+    showAnalysis: false,
+    // 【修复3】是否已提交答案（用于多选题白卷场景，空字符串也能触发解析显示）
+    hasSubmitted: false
   },
 
   // 答题历史记录相关变量
@@ -124,24 +126,28 @@ Page({
         this._currentIndex = 0;
 
         const firstQ = this._questions[0];
-        const savedAnswer = this._getHistoryAnswer(firstQ.id);
         const isMulti = firstQ.type === 'multiple';
 
-        // 【修复1】统一初始化：单选题也用 userAnswers 存储，用于 WXS 显示选中态
-        // 【修复2】userAnswer 只在"确认答案"后才设置，避免答案提前暴露
+        // 【修复2】专项刷题模式下不恢复历史答案，保证"全新挑战"体验
+        // 只有在错题练习模式下才恢复历史答案
+        const isErrorMode = this._currentMode === 'error';
+        const savedAnswer = isErrorMode ? this._getHistoryAnswer(firstQ.id) : null;
         const initialAnswer = savedAnswer ? (isMulti ? savedAnswer.join(',') : savedAnswer) : null;
+
+        // 【统一容错处理】支持多种字段名：analysis, analysisText, explanation
+        const analysisText = firstQ.analysis || firstQ.analysisText || firstQ.explanation || '暂无解析';
 
         this.setData({
           totalQuestions: this._questions.length,
           currentQuestionText: firstQ.content,
           options: firstQ.options,
           correctAnswer: firstQ.correctAnswer,
-          analysisText: firstQ.analysis,
+          analysisText: analysisText,
           currentQuestionId: firstQ.id,
           currentQuestionType: firstQ.type,
           currentIndex: 0,
-          userAnswer: initialAnswer,  // 恢复历史答案，但不立即显示（需要在答题模式下确认）
-          userAnswers: { [firstQ.id]: savedAnswer || (isMulti ? [] : null) },  // 单选题存 null，多选题存 []
+          userAnswer: null,  // 始终从 null 开始，避免历史答案干扰刷题体验
+          userAnswers: { [firstQ.id]: isErrorMode ? (savedAnswer || (isMulti ? [] : null)) : (isMulti ? [] : null) },  // 错题模式恢复答案，其他模式清空
           showAnalysis: false
         });
 
@@ -178,24 +184,28 @@ Page({
         this._currentIndex = 0;
 
         const firstQ = this._questions[0];
-        const savedAnswer = this._getHistoryAnswer(firstQ.id);
         const isMulti = firstQ.type === 'multiple';
 
-        // 【修复1】统一初始化：单选题也用 userAnswers 存储，用于 WXS 显示选中态
-        // 【修复2】userAnswer 只在"确认答案"后才设置，避免答案提前暴露
+        // 【修复2】专项刷题模式下不恢复历史答案，保证"全新挑战"体验
+        // 只有在错题练习模式下才恢复历史答案
+        const isErrorMode = this._currentMode === 'error';
+        const savedAnswer = isErrorMode ? this._getHistoryAnswer(firstQ.id) : null;
         const initialAnswer = savedAnswer ? (isMulti ? savedAnswer.join(',') : savedAnswer) : null;
+
+        // 【统一容错处理】支持多种字段名：analysis, analysisText, explanation
+        const analysisText = firstQ.analysis || firstQ.analysisText || firstQ.explanation || '暂无解析';
 
         this.setData({
           totalQuestions: this._questions.length,
           currentQuestionText: firstQ.content,
           options: firstQ.options,
           correctAnswer: firstQ.correctAnswer,
-          analysisText: firstQ.analysis,
+          analysisText: analysisText,
           currentQuestionId: firstQ.id,
           currentQuestionType: firstQ.type,
           currentIndex: 0,
-          userAnswer: initialAnswer,
-          userAnswers: { [firstQ.id]: savedAnswer || (isMulti ? [] : null) },
+          userAnswer: null,  // 始终从 null 开始，避免历史答案干扰刷题体验
+          userAnswers: { [firstQ.id]: isErrorMode ? (savedAnswer || (isMulti ? [] : null)) : (isMulti ? [] : null) },
           showAnalysis: false
         });
 
@@ -250,12 +260,15 @@ Page({
 
     const initialAnswer = savedAnswer ? (isMulti ? savedAnswer.join(',') : savedAnswer) : null;
 
+    // 【统一容错处理】支持多种字段名
+    const analysisText = firstQ.analysis || firstQ.analysisText || firstQ.explanation || '暂无解析';
+
     this.setData({
       totalQuestions: this._questions.length,
       currentQuestionText: firstQ.content,
       options: firstQ.options,
       correctAnswer: firstQ.correctAnswer,
-      analysisText: firstQ.analysis,
+      analysisText: analysisText,
       currentQuestionId: firstQ.id,
       currentQuestionType: firstQ.type,
       currentIndex: 0,
@@ -550,8 +563,13 @@ Page({
         .catch(err => console.error('记录错题失败:', err));
     }
 
-    // 显示结果
-    this.setData({ userAnswer: userArr.length > 0 ? userArr.join(',') : '' });
+    // 【修复3】显示结果，使用 hasSubmitted 确保白卷也能显示解析
+    // userAnswer 设为特殊标记表示已提交，但不影响空字符串场景
+    const submittedAnswer = userArr.length > 0 ? userArr.join(',') : '__SUBMITTED__';
+    this.setData({ 
+      userAnswer: submittedAnswer,
+      hasSubmitted: true  // 标记已提交，用于触发解析显示
+    });
 
     // 自动下一题（使用实例变量追踪定时器）
     if (this.data.isAutoNext) {
@@ -604,21 +622,20 @@ Page({
 
       this._currentIndex = this._currentIndex - 1;
       const prevQ = this._questions[this._currentIndex];
-
-      // 获取上一题的之前答案（如果有的话）
-      const prevAnswer = this._getHistoryAnswer(prevQ.id);
       const isMulti = prevQ.type === 'multiple';
 
-      // 【修复2】合并 userAnswers：保留其他题目的答案，只更新当前题
-      const newUserAnswers = { ...this.data.userAnswers, [prevQ.id]: prevAnswer || (isMulti ? [] : null) };
+      // 【修复2】只有错题练习模式才恢复历史答案，其他模式保持空白
+      const isErrorMode = this._currentMode === 'error';
+      const prevAnswer = isErrorMode ? this._getHistoryAnswer(prevQ.id) : null;
 
       this.setData({
         currentIndex: this._currentIndex,
         currentQuestionId: prevQ.id,
         currentQuestionType: prevQ.type,
-        userAnswer: prevAnswer ? (isMulti ? prevAnswer.join(',') : prevAnswer) : null,
-        userAnswers: newUserAnswers,
-        showAnalysis: false
+        userAnswer: null,  // 始终设为 null，保证全新挑战体验
+        userAnswers: { ...this.data.userAnswers, [prevQ.id]: isMulti ? [] : null },
+        showAnalysis: false,
+        hasSubmitted: false  // 【修复3】重置提交状态
       }, () => {
         this.updateQuestionData();
       });
@@ -645,21 +662,20 @@ Page({
 
       this._currentIndex = this._currentIndex + 1;
       const nextQ = this._questions[this._currentIndex];
-
-      // 获取下一题的之前答案（如果有的话）
-      const nextAnswer = this._getHistoryAnswer(nextQ.id);
       const isMulti = nextQ.type === 'multiple';
 
-      // 【修复2】合并 userAnswers：保留其他题目的答案，只更新当前题
-      const newUserAnswers = { ...this.data.userAnswers, [nextQ.id]: nextAnswer || (isMulti ? [] : null) };
+      // 【修复2】只有错题练习模式才恢复历史答案，其他模式保持空白
+      const isErrorMode = this._currentMode === 'error';
+      const nextAnswer = isErrorMode ? this._getHistoryAnswer(nextQ.id) : null;
 
       this.setData({
         currentIndex: this._currentIndex,
         currentQuestionId: nextQ.id,
         currentQuestionType: nextQ.type,
-        userAnswer: nextAnswer ? (isMulti ? nextAnswer.join(',') : nextAnswer) : null,
-        userAnswers: newUserAnswers,
-        showAnalysis: false
+        userAnswer: null,  // 始终设为 null，保证全新挑战体验
+        userAnswers: { ...this.data.userAnswers, [nextQ.id]: isMulti ? [] : null },
+        showAnalysis: false,
+        hasSubmitted: false  // 【修复3】重置提交状态
       }, () => {
         this.updateQuestionData();
       });
@@ -700,11 +716,14 @@ Page({
     const currentQ = this.getCurrentQuestion();
     if (!currentQ) return;
 
+    // 【统一容错处理】支持多种字段名：analysis, analysisText, explanation
+    const analysisText = currentQ.analysis || currentQ.analysisText || currentQ.explanation || '暂无解析';
+
     this.setData({
       currentQuestionText: currentQ.content,
       options: currentQ.options,
       correctAnswer: currentQ.correctAnswer,
-      analysisText: currentQ.analysis || '暂无解析'
+      analysisText: analysisText
     });
 
     // 检查收藏状态

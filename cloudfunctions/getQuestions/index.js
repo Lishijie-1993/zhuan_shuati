@@ -6,7 +6,7 @@ const db = cloud.database();
 const _ = db.command;
 
 exports.main = async (event, context) => {
-  const { chapter, mode = 'normal', page = 1, limit = 10 } = event;
+  const { chapter, mode = 'normal', page = 1, limit = 10, includeAnswer = false } = event;
   const wxContext = cloud.getWXContext();
   const openid = wxContext.OPENID;
 
@@ -25,7 +25,7 @@ exports.main = async (event, context) => {
       query = {};
     } else if (mode === 'error') {
       // 错题模式：支持真正的分页获取
-      return await getErrorQuestions(openid, page, limit);
+      return await getErrorQuestions(openid, page, limit, includeAnswer);
     } else if (mode === 'byIds') {
       // 根据ID列表获取题目
       const { ids = [] } = event;
@@ -43,7 +43,7 @@ exports.main = async (event, context) => {
       const list = ids
         .map(id => questionsRes.data.find(q => q._id === id))
         .filter(q => q)
-        .map(q => formatQuestion(q));
+        .map(q => formatQuestion(q, includeAnswer));
 
       return {
         list,
@@ -70,7 +70,7 @@ exports.main = async (event, context) => {
 
       // 从随机样本中手动分页
       const pageData = randomRes.list.slice(skip, skip + limit);
-      const list = pageData.map(q => formatQuestion(q));
+      const list = pageData.map(q => formatQuestion(q, includeAnswer));
 
       return {
         list,
@@ -84,7 +84,7 @@ exports.main = async (event, context) => {
         .limit(limit)
         .get();
 
-      const list = questionsRes.data.map(q => formatQuestion(q));
+      const list = questionsRes.data.map(q => formatQuestion(q, includeAnswer));
       return {
         list,
         total,
@@ -103,7 +103,7 @@ exports.main = async (event, context) => {
 };
 
 // 获取错题（真正的分页，避免内存溢出）
-async function getErrorQuestions(openid, page, limit) {
+async function getErrorQuestions(openid, page, limit, includeAnswer = false) {
   const skip = (page - 1) * limit;
 
   // 构建错题查询条件
@@ -155,7 +155,7 @@ async function getErrorQuestions(openid, page, limit) {
     .map(id => questionsRes.data.find(q => q._id === id))
     .filter(q => q)
     .map(q => {
-      const formatted = formatQuestion(q);
+      const formatted = formatQuestion(q, includeAnswer);
       formatted.errorCount = errorMap[q._id] ? errorMap[q._id].error_count || 1 : 1;
       return formatted;
     });

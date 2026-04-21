@@ -60,7 +60,7 @@
       {{currentQuestionType === 'multiple' ? '多选题' : '单选题'}}：点击选项{{currentQuestionType === 'multiple' ? '切换选中状态' : '选择答案'}}，确认后提交{{isAutoNext ? '，答对自动下一题' : ''}}
     </view>
 
-    <view class="analysis-box" wx:if="{{mode === 'recite' || userAnswer || showAnalysis}}">
+    <view class="analysis-box" wx:if="{{mode === 'recite' || userAnswer || showAnalysis || hasSubmitted}}">
       <view class="analysis-header">
         <text class="analysis-title">试题解析</text>
         <text class="analysis-error" bindtap="onReportError">纠错</text>
@@ -107,16 +107,25 @@
       // 兼容处理：userAnswers 可能是 undefined, null, 字符串, 数组
       if (userAnswers === undefined || userAnswers === null) return false;
 
+      // 统一转换为字符串进行比较
+      var normalizedOptionId = typeof optionId === 'string' ? optionId.toUpperCase() : String(optionId).toUpperCase();
+
       // 字符串：单选答案
       if (typeof userAnswers === 'string') {
-        return userAnswers === optionId;
+        var normalizedUser = userAnswers.toUpperCase();
+        return normalizedUser === normalizedOptionId;
       }
 
-      // 【修复5】使用 typeof indexOf 判断是否是数组（WXS 兼容）
+      // 【修复1】WXS 中不使用 this，直接调用 isSelected 的逻辑
+      // 数组处理
       if (typeof userAnswers.indexOf === 'function') {
-        // 安全调用 indexOf
         try {
-          return userAnswers.indexOf(optionId) > -1;
+          for (var i = 0; i < userAnswers.length; i++) {
+            var item = userAnswers[i];
+            var normalizedItem = typeof item === 'string' ? item.toUpperCase() : String(item).toUpperCase();
+            if (normalizedItem === normalizedOptionId) return true;
+          }
+          return false;
         } catch (e) {
           return false;
         }
@@ -124,25 +133,36 @@
 
       return false;
     },
-    // 检查选项是否正确答案
+    // 检查选项是否正确答案（支持大小写不敏感比较，支持数字类型）
     isCorrect: function(optionId, correctAnswer) {
       if (!correctAnswer) return false;
+
+      // 【修复4】统一转换为字符串再转大写，处理数字类型
+      var normalizedOptionId = typeof optionId === 'string' ? optionId.toUpperCase() : String(optionId).toUpperCase();
 
       if (typeof correctAnswer === 'string') {
         if (correctAnswer.indexOf(',') > -1) {
           var parts = correctAnswer.split(',');
           for (var i = 0; i < parts.length; i++) {
-            if (parts[i].trim() === optionId) return true;
+            var part = parts[i];
+            var normalizedPart = typeof part === 'string' ? part.trim().toUpperCase() : String(part).trim().toUpperCase();
+            if (normalizedPart === normalizedOptionId) return true;
           }
           return false;
         }
-        return correctAnswer === optionId;
+        var normalizedCorrect = correctAnswer.toUpperCase();
+        return normalizedCorrect === normalizedOptionId;
       }
 
-      // 【修复5】使用 typeof indexOf 判断是否是数组（WXS 兼容）
+      // 【修复4】数组处理，同时处理数字类型
       if (typeof correctAnswer.indexOf === 'function') {
         try {
-          return correctAnswer.indexOf(optionId) > -1;
+          for (var j = 0; j < correctAnswer.length; j++) {
+            var item = correctAnswer[j];
+            var normalizedItem = typeof item === 'string' ? item.toUpperCase() : String(item).toUpperCase();
+            if (normalizedItem === normalizedOptionId) return true;
+          }
+          return false;
         } catch (e) {
           return false;
         }
@@ -150,9 +170,31 @@
 
       return false;
     },
-    // 检查用户是否选错了这个选项
+    // 【修复1】检查用户是否选错了这个选项（不使用 this，避免 WXS 报错）
     isUserWrong: function(userAnswers, optionId) {
-      return this.isSelected(userAnswers, optionId);
+      // 直接使用 isSelected 的逻辑
+      if (userAnswers === undefined || userAnswers === null) return false;
+
+      var normalizedOptionId = typeof optionId === 'string' ? optionId.toUpperCase() : String(optionId).toUpperCase();
+
+      if (typeof userAnswers === 'string') {
+        return userAnswers.toUpperCase() === normalizedOptionId;
+      }
+
+      if (typeof userAnswers.indexOf === 'function') {
+        try {
+          for (var i = 0; i < userAnswers.length; i++) {
+            var item = userAnswers[i];
+            var normalizedItem = typeof item === 'string' ? item.toUpperCase() : String(item).toUpperCase();
+            if (normalizedItem === normalizedOptionId) return true;
+          }
+          return false;
+        } catch (e) {
+          return false;
+        }
+      }
+
+      return false;
     }
   }
 </wxs>
