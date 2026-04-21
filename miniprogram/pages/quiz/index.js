@@ -16,12 +16,19 @@ Page({
     analysisText: '',
     options: [],
     currentQuestionText: '',
-    questions: []
+    questions: [],
+    statusBarHeight: 20  // 状态栏高度，默认值
   },
 
   onLoad(options) {
     // 标记页面已挂载，用于防止内存泄漏
     this._isMounted = true;
+
+    // 获取状态栏高度，用于自定义导航栏
+    const systemInfo = wx.getSystemInfoSync();
+    const statusBarHeight = systemInfo.statusBarHeight || 20;
+
+    this.setData({ statusBarHeight });
 
     if (options.mode === 'error') {
       // 错题练习模式

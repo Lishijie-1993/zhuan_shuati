@@ -23,7 +23,7 @@ exports.main = async (event, context) => {
     }
 
     // 获取排行榜数据（分页）
-    // 使用 _id 作为第二排序条件，确保同分用户排序稳定，避免翻页 Bug
+    // 使用分数作为第一排序条件，_id 作为第二排序条件，确保同分用户排序稳定
     const rankRes = await db.collection('users')
       .orderBy(sortField, 'desc')
       .orderBy('_id', 'asc')
@@ -39,7 +39,8 @@ exports.main = async (event, context) => {
     const myUser = myUserRes.data[0] || {};
     const myScore = myUser[sortField] || 0;
 
-    // 计算当前用户排名：统计分数高于当前用户的用户数 + 1
+    // 计算当前用户排名：统计分数严格高于当前用户的用户数 + 1
+    // 注意：这里只统计分数严格高于的，不包括同分的
     const higherCountRes = await db.collection('users')
       .where({
         [sortField]: _.gt(myScore)
@@ -53,12 +54,15 @@ exports.main = async (event, context) => {
       })
       .count();
 
+    // 计算我的排名：严格高于的人数 + 1
     const myRank = higherCountRes.total + 1;
-    const tiedCount = equalCountRes.total; // 与我同分的总人数
+    // 同分的人数（包括自己）
+    const tiedCount = equalCountRes.total;
 
     // 构建排行榜列表
+    // 排名 = 跳过数量 + 当前页索引 + 1
     const list = rankRes.data.map((user, index) => ({
-      rank: skip + index + 1,
+      rank: skip + index + 1,  // 使用实际位置作为排名
       id: user._id,
       nickname: user.nickname || '匿名用户',
       avatar: user.avatar || '/images/icons/user.png',
@@ -70,8 +74,11 @@ exports.main = async (event, context) => {
     }));
 
     // 构建我的排名信息（包含并列信息）
+    // 如果有同分的人，显示并列排名
+    const displayRank = tiedCount > 1 ? `${myRank} (与${tiedCount - 1}人并列)` : myRank;
     const myRankInfo = {
       rank: myRank,
+      displayRank: displayRank,
       tiedCount: tiedCount,
       id: myUser._id,
       nickname: myUser.nickname || '我',

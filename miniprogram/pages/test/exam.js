@@ -52,6 +52,23 @@ Page({
     });
   },
 
+  // 页面显示时触发，用于处理切后台后恢复的情况
+  onShow() {
+    // 如果定时器没有运行，重新启动（处理从后台恢复的情况）
+    if (!this.timer && !this.data.isSubmitting && !this.data.loading) {
+      this.startTimer();
+    }
+  },
+
+  // 页面隐藏时触发，用于处理切后台的情况
+  onHide() {
+    // 暂停定时器，防止切后台时积压回调
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = null;
+    }
+  },
+
   goBack() {
     wx.showModal({
       title: '确认退出',
@@ -124,6 +141,12 @@ Page({
   },
 
   startTimer() {
+    // 防止重复启动定时器
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = null;
+    }
+
     // 记录考试开始时间，用于计算实际经过的时间
     this.examStartTime = Date.now();
 
@@ -134,6 +157,7 @@ Page({
 
       if (timeLeft <= 0) {
         clearInterval(this.timer);
+        this.timer = null;
         this.autoSubmit();
         return;
       }
@@ -241,7 +265,11 @@ Page({
     this._processingResult = true;
 
     try {
-      clearInterval(this.timer);
+      // 清理定时器并置空
+      if (this.timer) {
+        clearInterval(this.timer);
+        this.timer = null;
+      }
 
       let correctCount = 0;
       this.data.questions.forEach(q => {
@@ -329,6 +357,10 @@ Page({
   },
 
   onUnload() {
-    clearInterval(this.timer);
+    // 清理定时器并置空，防止内存泄漏
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = null;
+    }
   }
 });

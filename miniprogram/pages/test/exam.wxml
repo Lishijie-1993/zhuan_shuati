@@ -52,7 +52,10 @@
     isSelected: function(userAns, id) {
       if (!userAns) return false;
       if (typeof userAns === 'string') return userAns === id;
-      if (Array.isArray(userAns)) return userAns.indexOf(id) > -1;
+      // WXS 不支持 Array.isArray，使用 toString.call 判断
+      if (toString.call(userAns) === '[object Array]') {
+        return userAns.indexOf(id) > -1;
+      }
       return false;
     }
   }

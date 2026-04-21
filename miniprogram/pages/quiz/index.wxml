@@ -1,6 +1,17 @@
 <view class="container">
-  <!-- 使用系统导航栏 -->
+  <!-- 自定义导航栏 -->
+  <view class="custom-nav">
+    <view class="status-bar" style="height: {{statusBarHeight}}px;"></view>
+    <view class="nav-content">
+      <view class="nav-back" bindtap="goBack">
+        <image src="/images/icons/back.png" class="back-icon"></image>
+      </view>
+      <view class="nav-title">{{chapterTitle}}</view>
+      <view class="nav-placeholder"></view>
+    </view>
+  </view>
 
+  <!-- 模式切换 -->
   <view class="mode-switch">
     <view class="switch-container">
       <view class="mode-item {{mode === 'answer' ? 'active' : ''}}" bindtap="switchMode" data-mode="answer">答题模式</view>
@@ -90,7 +101,10 @@
     isSelected: function(userAnswers, optionId) {
       if (!userAnswers) return false;
       if (typeof userAnswers === 'string') return userAnswers === optionId;
-      if (Array.isArray(userAnswers)) return userAnswers.indexOf(optionId) > -1;
+      // WXS 不支持 Array.isArray，使用 toString.call 判断
+      if (toString.call(userAnswers) === '[object Array]') {
+        return userAnswers.indexOf(optionId) > -1;
+      }
       return false;
     },
     // 检查选项是否正确答案
@@ -106,7 +120,10 @@
         }
         return correctAnswer === optionId;
       }
-      if (Array.isArray(correctAnswer)) return correctAnswer.indexOf(optionId) > -1;
+      // WXS 不支持 Array.isArray，使用 toString.call 判断
+      if (toString.call(correctAnswer) === '[object Array]') {
+        return correctAnswer.indexOf(optionId) > -1;
+      }
       return false;
     },
     // 检查用户是否选错了这个选项

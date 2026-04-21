@@ -16,7 +16,8 @@ Page({
     if (pages.length > 1) {
       wx.navigateBack({ delta: 1 });
     } else {
-      wx.reLaunch({ url: '/pages/index/index' });
+      // 使用 switchTab 跳转到 TabBar 页面，避免白屏闪烁
+      wx.switchTab({ url: '/pages/index/index' });
     }
   },
 
