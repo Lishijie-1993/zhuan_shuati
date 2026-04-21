@@ -17,6 +17,8 @@ Page({
 
   // 提交锁：防止并发交卷导致的数据覆写冲突
   _submitLock: false,
+  // 标记考试是否已开始（定时器是否需要运行）
+  _examStarted: false,
 
   onLoad(options) {
     console.log('[exam] onLoad options:', options);
@@ -42,6 +44,12 @@ Page({
       snapshotId: null
     });
 
+    // 仅在 onLoad 时设置考试开始时间和已用时间
+    // 这些值在考试期间保持不变，切后台恢复时不需要重置
+    this.examStartTime = Date.now();
+    this._examStartTimeOnLoad = this.examStartTime;
+    this._examStarted = true;
+
     this.loadQuestions(paperId);
     this.startTimer();
 
@@ -54,8 +62,9 @@ Page({
 
   // 页面显示时触发，用于处理切后台后恢复的情况
   onShow() {
-    // 如果定时器没有运行，重新启动（处理从后台恢复的情况）
-    if (!this.timer && !this.data.isSubmitting && !this.data.loading) {
+    // 如果考试已开始且定时器没有运行，重新启动（处理从后台恢复的情况）
+    // 使用 _examStarted 标记来判断，避免在 loading 状态下误启动
+    if (this._examStarted && !this.timer && !this.data.isSubmitting) {
       this.startTimer();
     }
   },
@@ -63,6 +72,17 @@ Page({
   // 页面隐藏时触发，用于处理切后台的情况
   onHide() {
     // 暂停定时器，防止切后台时积压回调
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = null;
+    }
+  },
+
+  // 页面卸载时触发
+  onUnload() {
+    // 标记考试结束，防止 onShow 误触发
+    this._examStarted = false;
+    // 清理定时器并置空，防止内存泄漏
     if (this.timer) {
       clearInterval(this.timer);
       this.timer = null;
@@ -140,15 +160,18 @@ Page({
     wx.showToast({ title: '使用模拟题目', icon: 'none' });
   },
 
-  startTimer() {
+  startTimer(resetTime = false) {
     // 防止重复启动定时器
     if (this.timer) {
       clearInterval(this.timer);
       this.timer = null;
     }
 
-    // 记录考试开始时间，用于计算实际经过的时间
-    this.examStartTime = Date.now();
+    // 仅在首次启动时设置考试开始时间
+    // 切后台恢复时不应重置时间，否则会导致时间"续杯"
+    if (resetTime || !this.examStartTime) {
+      this.examStartTime = Date.now();
+    }
 
     this.timer = setInterval(() => {
       // 计算实际经过的时间（不受后台暂停影响）
@@ -353,14 +376,6 @@ Page({
       console.log('本地兜底记录创建成功');
     } catch (err) {
       console.error('创建本地兜底记录失败:', err);
-    }
-  },
-
-  onUnload() {
-    // 清理定时器并置空，防止内存泄漏
-    if (this.timer) {
-      clearInterval(this.timer);
-      this.timer = null;
     }
   }
 });
